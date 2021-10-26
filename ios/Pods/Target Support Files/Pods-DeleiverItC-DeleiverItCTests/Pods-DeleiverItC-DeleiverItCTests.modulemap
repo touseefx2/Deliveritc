@@ -1,0 +1,6 @@
+module Pods_DeleiverItC_DeleiverItCTests {
+  umbrella header "Pods-DeleiverItC-DeleiverItCTests-umbrella.h"
+
+  export *
+  module * { export * }
+}
