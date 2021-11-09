@@ -56,7 +56,7 @@ import PushNotification from "react-native-push-notification";
 			  longitudeDelta: LONGITUDE_DELTA,
 			}
 		  },
-		  rs:"400",
+		  rs:"400",  //it is define in user app
 		  //trip 
 		  createdAt:new Date(),
 		  collectcash:"",

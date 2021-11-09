@@ -124,7 +124,6 @@ useEffect(() => {
 }, [p,ridemodal])
 
 
-
  
   
   const fetchDistanceBetweenPointsOnline = (lat1, lng1, lat2, lng2,c) => { // Pass Latitude & Longitude of both points as a parameter
