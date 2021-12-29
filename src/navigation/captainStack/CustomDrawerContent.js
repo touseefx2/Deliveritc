@@ -5,25 +5,34 @@ import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-nativ
 import theme from "../../themes/index"; 
 import { inject, observer } from "mobx-react"; 
 
-export default inject("store")(observer(CustomDrawerContent));
+export default inject("userStore","generalStore","carStore")(observer(CustomDrawerContent));
  
-function CustomDrawerContent (props) { 
+function CustomDrawerContent (props) {
+   
  
- const {user,cars}=props.store;
+  const {user,Logout }=props.userStore;
+  const {cars,setCars }=props.carStore;
+   
 const { state,...rest } = props;
 
 const newState = { ...state}  //copy from state before applying any filter. do not change original state
-newState.routes = newState.routes.filter(item => (item.name !== 'Logout' && item.name !=="Rate" && item.name !=="Notification")) //replace "Login' with your route name
+// newState.routes = newState.routes.filter(item => (item.name !== 'Logout' && item.name !=="Rate" && item.name !=="Notification")) //replace "Login' with your route name
  
- let carnum=""
- if(cars.length>0){
-   cars.map((e,i,a)=>{
+   let  carnum=cars.registration_number
+   
 
-     if(user.selectedCar==e.id){
-      carnum=e.number
+   const onClick=(c)=>{
+    
+     if(c=="logout"){
+      setCars(false) 
+      Logout();
      }
-   })
- }
+
+    if(c=="rate"){
+      props.navigation.closeDrawer();
+    }
+   }
+
 
 
     return(  
@@ -43,10 +52,10 @@ newState.routes = newState.routes.filter(item => (item.name !== 'Logout' && item
 
  
 <View style={{width:"63%",marginLeft:7 }}> 
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:18,fontFamily:theme.fonts.fontMedium,textTransform:"capitalize",lineHeight:20,color:"white"}}> 
-{user.name}
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:18,fontFamily:theme.fonts.fontMedium,textTransform:"capitalize",lineHeight:28,color:"white"}}> 
+{user.fullname}
  </theme.Text>  
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:16,color:theme.color.mainPlaceholderColor,textTransform:"capitalize",lineHeight:20}}> 
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:16,color:theme.color.mainPlaceholderColor,textTransform:"capitalize",lineHeight:26}}> 
   {carnum}
  </theme.Text>
  </View>
@@ -64,15 +73,12 @@ newState.routes = newState.routes.filter(item => (item.name !== 'Logout' && item
     
  <DrawerItemList    state={newState} {...rest} />
      
-      
-    {/* <Text style={{fontSize:12,color:"white",marginTop:20,marginLeft:15}}>COMPANY</Text>
-  */}
- 
+  
 <View  style={{width:"90%",height:0.5,backgroundColor:"white",marginTop:"6%",marginBottom:10,alignSelf:"center"}} />
  
                          <TouchableOpacity 
                             style={styles.drawerItem} 
-                            onPress={() => { props.navigation.navigate('Rate')}} >
+                            onPress={() => { onClick("rate")}} >
                              <Image 
                               style={{width:22,height:22}}
                               resizeMode="contain"
@@ -83,7 +89,7 @@ newState.routes = newState.routes.filter(item => (item.name !== 'Logout' && item
 
                         <TouchableOpacity 
                             style={[styles.drawerItem,{marginBottom:10}]} 
-                            onPress={() => { props.navigation.navigate('Logout')}}>
+                            onPress={() => { onClick("logout")}}>
                              <Image 
                               style={{width:22,height:22}}
                               resizeMode="contain"

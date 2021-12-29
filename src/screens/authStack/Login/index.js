@@ -16,11 +16,14 @@ import ModalSelector from 'react-native-modal-selector'
 import utils from "../../../utils/index"
 import LinearGradient from 'react-native-linear-gradient';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
-import GVs from '../../../store/Global_Var';
+import GVs from '../../../stores/Global_Var';
 import { inject, observer } from "mobx-react"; 
+import db from "../../../database/index" 
+import utilsS from "../../../utilsS/index"
+import {fcmService} from "../../../services/Notification/FCMService"
+import auth from '@react-native-firebase/auth';
 
- 
-let phoneValidate=true
+
  //Custom Phone Modal Data
  let index=0;
  const data = [
@@ -32,9 +35,10 @@ let phoneValidate=true
 
 ];
 
+  
+export default inject("userStore","generalStore")(observer(Login));
 
-  export default inject("store")(observer(Login));
-
+ 
   function Login (props) {
   
       
@@ -43,8 +47,10 @@ let phoneValidate=true
   let phoneInput_2 = useRef(); 
   let  phoneInput_3 = useRef(); 
 
-  const {isInternet}=props.store;
-  const [isis,setisis] = useState(false)
+  // const { } =  props.userStore;
+  const {isInternet}   =  props.generalStore;
+ 
+  const [showInternetMessage, setshowInternetMessage] = useState(false);
 
   const [loader, setloader] = useState(false);
   //phone
@@ -64,6 +70,8 @@ let phoneValidate=true
   const [ phoneInputFieldborderColor3,setphoneInputFieldborderColor3] = useState(theme.color.mainPlaceholderColor)
   const [phoneF,setphoneF] = useState(false)
   const [phoneV,setphoneV] = useState(false)
+
+  let Phone="";
   
   const focusField= (field) =>{
 
@@ -90,7 +98,25 @@ let phoneValidate=true
      }
 
      useEffect(() => {
+      if (auth().currentUser) {
+				auth().signOut();
+				auth().currentUser?.delete();
+			} 
+     }, [])
+
+     useEffect(() => {
+      if(showInternetMessage){
+       setTimeout(() => {
+         setshowInternetMessage(false)
+       }, 1500);  
+      }
+   }, [showInternetMessage])
+   
+
+     useEffect(() => {
       if(selectedCountryCode!=""){
+        setphoneF(false);
+        setphoneV(false)
         setphone1("");setphone2("");setphone3("");
         let  unfocuscolor = theme.color.mainPlaceholderColor
         setphoneInputFieldborderColor1(unfocuscolor);
@@ -102,18 +128,18 @@ let phoneValidate=true
 
      const setPhoneInput=(txt,p)=>{
      if(p=="phone1"){
-      setphone1(txt);setphoneF(false),setphoneV(false)
+      setphone1(txt.replace(/[- #*;,.<>\{\}\[\]\\\/]/gi, ''));setphoneF(false),setphoneV(false)
       if (txt.length == phn1MaxLength) {phoneInput_2 && phoneInput_2.focus()} 
      }
 
      if(p=="phone2"){
-      setphone2(txt);setphoneF(false),setphoneV(false) 
+      setphone2(txt.replace(/[- #*;,.<>\{\}\[\]\\\/]/gi, ''));setphoneF(false),setphoneV(false) 
       if ((txt.length == phn2MaxLength && phoneFields==3)) {phoneInput_3 && phoneInput_3.focus()}  
       if ((txt.length == "")) {phoneInput_1 && phoneInput_1.focus()}
     }
 
     if(p=="phone3"){
-      setphone3(txt);setphoneF(false),setphoneV(false)
+      setphone3(txt.replace(/[- #*;,.<>\{\}\[\]\\\/]/gi, ''));setphoneF(false),setphoneV(false)
       if ((txt.length == "")) {phoneInput_2 && phoneInput_2.focus()}
     }
 
@@ -142,128 +168,153 @@ let phoneValidate=true
 
        const  checkEmptyFields= ()=>
        {
-          
-         if(phoneFields==3 )
-         {
-           if(phone1!="" && phone2!="" && phone3!="" && selectedCountryCode!=""){
-           let Phone= selectedCountryCode+phone1+phone2+phone3
-           phoneValidate = utils.Validation.PhoneValidate(Phone,selectedCountryCode)
-           }
-         }else if (phoneFields==2 ){
-           if (phone1!="" && phone2!=""  && selectedCountryCode!=""){
-           let Phone = selectedCountryCode+phone1+phone2
-           phoneValidate = utils.Validation.PhoneValidate(Phone,selectedCountryCode)
-           }
-         }
-       
-         setphoneV(phoneValidate ? false : true)
-       
+      
          //check empty fields
          if(phoneFields==3){
        
-           if( selectedCountryCode=="" || phone1=="" || phone2=="" || phone3=="" ){
-            setphoneF(true)
-             return false;
-           } else{
-             setphoneF(false)
+           if(phone1=="" && phone2=="" && phone3==""){
              return true;
-           }
+           }   
        
          }else if (phoneFields==2){
        
-           if(selectedCountryCode=="" || phone1=="" || phone2==""   ){
-             setphoneF(true)
-             return false;
-           } else{
-             setphoneF(false)
+           if( phone1=="" && phone2=="" ){
              return true;
-           }
-       
          }
         
        
-       
         
        }
-  
-       const _signIn=(phone)=>{
- if(isInternet==false){
-   setisis(true);
-   setTimeout(() => {
-     setisis(false)
-   }, 1500);
- }else{
-  if(GVs.user.length>0){
-
-    setloader(true);
-
-
-    let c=false;
-    let user=null;
-
-    GVs.user.map((e,i,a)=>{          
-      if(e.phone==phone){
-        user=e;
-        user.selectedCar="";
-        user.sigin=false;
-        user.notificationToken="";
-        user.acceptterm=false;
-        user.optin=false;
-        user.online=true;
-        user.onlineTime=[]
-        c=true;
-        return false;
-      } 
-    })
-
-
-    setTimeout(() => {
-      setloader(false);
-      if(c){
-        const obj={phone:phone,d:{p1:phone1,p2:phone2,p3:phone3,pf:phoneFields,cc:selectedCountryCode},user}
-        props.navigation.navigate("SigninPin",obj)
-      }else{
-        utils.AlertMessage("","No User Found")
       }
-    }, 1200);
-   
 
-  }else{
-      utils.AlertMessage("","No User Found in Database")
-    }
+       const phoneValidate=()=>{
+        if(phoneFields==3 )
+        {
+         
+          let Phone= selectedCountryCode+phone1+phone2+phone3
+          let phoneValidate = utils.Validation.PhoneValidate(Phone,selectedCountryCode)
+           
+        return phoneValidate;
+        }else if (phoneFields==2 ){
+          
+          let Phone = selectedCountryCode+phone1+phone2
+          let phoneValidate = utils.Validation.PhoneValidate(Phone,selectedCountryCode)
+           
+          return phoneValidate;
+        }
+       }
+
+   const  gotoOTP=(mobile,userd,nt,at)=>{
+      props.navigation.navigate("OTP",{mobile,userd,nt,at})
+       }
+     
+       const checkIsUserRegister=(token)=>{
+ 
+        const bodyData={
+          mobile_number:Phone,
+          registration_token:token         //ntfctn token
+        }
+        const header=""
+         
+        // method, path, body, header
+        db.api.apiCall("post",db.link.login,bodyData,header)
+        .then((response) => {
+          
+          setloader(false);
+          console.log("checkIsUserRegister response : " , response);
+            
+          if(!response.token){
+            utils.AlertMessage("",response.message) ;
+            return
+          }
     
- }
+          if(response.token){   
+           
+          gotoOTP(Phone,response.data,token,response.token)
+          return;
+     
+        }
+ 
+           return;
+        }).catch((e) => {
+            setloader(false);
+           utils.AlertMessage("","Network request failed");
+           console.error("checkIsUserRegister catch error : ", e)
+          return;
+        })
         
-    
+        
+      }
+
+   const onRegister = (token) =>
+	{ 
+   
+	  if(token!=null)
+	 { 
+		checkIsUserRegister(token);
+	 }else{
+    setloader(false)
+     utils.AlertMessage("","rgstrtn token not generated !")
+   }
+    }
+  
+  const _signIn=()=>{
+
+ if(isInternet){
+  setloader(true);
+  
+	if(Platform.OS=="ios"){
+    setloader(false)
+    // fcmService.registerAppwithFCM();//forios
+    }else{
+    fcmService.register(onRegister);
+    }
+
+
+ }else{   
+   setshowInternetMessage(true)
+ }
+     
        
            }
   
     const SigninClick = ()=>
      {
+ 
        Keyboard.dismiss();
-       phoneValidate=true  
+       setphoneF(false);
+       setphoneV(false);
+
        let  unfocuscolor = theme.color.mainPlaceholderColor
        setphoneInputFieldborderColor1(unfocuscolor);
        setphoneInputFieldborderColor2(unfocuscolor);
        setphoneInputFieldborderColor3(unfocuscolor); 
  
-     if(checkEmptyFields())
+     if(!checkEmptyFields())
      {
-       if(phoneValidate) 
+        
+       if(phoneValidate()) 
        { 
-        let Phone= selectedCountryCode+phone1+phone2+phone3
-         _signIn(Phone);
+         Phone= selectedCountryCode+phone1+phone2+phone3
+         _signIn();
+         
+       }else{
+         setphoneV(true)
        } 
      
+     }else{
+       setphoneF(true)
      }
       
      
      }
-  
+
+    
+     
    return(
      
  <Layout style={styles.container}>
-{isis  && <utils.TopMessage  msg="Please connect internet"/>}
+{showInternetMessage && <utils.TopMessage  screen="Login" msg="Please connect internet"/>}
 <View style={styles.Bottom}>
       <theme.Text style={{fontSize:16,color:theme.color.mainPlaceholderColor}}>Enter phone number</theme.Text>
     <View style={{ marginTop:10,padding:2,alignItems:"center",flexDirection:"row"}} >
@@ -272,6 +323,7 @@ let phoneValidate=true
                     animationType="slide"
                     data={data}
                     ref={modalPicker}
+                    disabled={loader}
                     overlayStyle={{flex: 1, padding: '5%', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.8)'}}
                     scrollViewAccessible={true}
                     sectionTextStyle={{fontSize:26,color:"white",fontWeight:"bold"}} 
@@ -287,18 +339,21 @@ let phoneValidate=true
 
             <TextInput
             ref={r=>phoneInput_1=r}
+            editable={!loader}
             keyboardType="number-pad"   placeholder={phn1PlaceHolder}  value={phone1} maxLength={phn1MaxLength}     defaultValue={phone1} onFocus={() => focusField("phone1") } 
             placeholderTextColor={theme.color.mainPlaceholderColor} style={[styles.phoneinput,{borderColor:(phoneF||phoneV)?"red":phoneInputFieldborderColor1,backgroundColor:"white",color:"black"}]}
             onChangeText={(txt)=>{setPhoneInput(txt,"phone1")}}/>
             
            <TextInput
           ref={r=>phoneInput_2=r}
+          editable={!loader}
            keyboardType="number-pad" placeholder={phn2PlaceHolder}  value={phone2} maxLength={phn2MaxLength}     defaultValue={phone2} onFocus={() =>  focusField("phone2") } 
            placeholderTextColor={theme.color.mainPlaceholderColor} style={[styles.phoneinput,{borderColor:(phoneF||phoneV)?"red":phoneInputFieldborderColor2,backgroundColor:"white",color:"black"}]}
            onChangeText={(txt)=>{setPhoneInput(txt,"phone2")}}/>
          
            {phoneFields==3 &&(  
            <TextInput
+           editable={!loader}
            ref={r=>phoneInput_3=r}
            keyboardType="number-pad" placeholder={phn3PlaceHolder}  value={phone3} maxLength={phn3MaxLength}     defaultValue={phone3} onFocus={() =>  focusField("phone3") } 
            placeholderTextColor={theme.color.mainPlaceholderColor} style={[styles.phoneinput,{borderColor:(phoneF||phoneV)?"red":phoneInputFieldborderColor3 ,backgroundColor:"white",color:"black"}]} 
@@ -308,10 +363,10 @@ let phoneValidate=true
     
      <utils.CheckError phoneF={phoneF} phoneV={phoneV} countryCode={selectedCountryCode} textColor={"red"}/>       
      
-     <TouchableOpacity onPress={()=>{SigninClick()}} style={styles.BottomButton}>
+     <TouchableOpacity disabled={loader} onPress={()=>{SigninClick()}} style={styles.BottomButton}>
   		<LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
   			  		<View style={styles.ButtonRight}>
-              {loader==false&&(<Text style={styles.buttonText}>Sign in</Text>)}
+               {loader==false&&(<Text style={styles.buttonText}>Sign in</Text>)}
                {loader&&(<ActivityIndicator size={25} color={"white"} />)}
  			      	</View>
  			</LinearGradient>

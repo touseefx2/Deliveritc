@@ -33,16 +33,16 @@ const Drawer  = createDrawerNavigator();
     >
     
         <Drawer.Screen  name="Homes" component={Home_Stack} options={icon.homeIcon}  />
-        <Drawer.Screen  name="Captain Portal" component={CaptainPortal_Stack} options={icon.cpIcon}  />
-        <Drawer.Screen  name="Change PIN" component={screens.ChangePin} options={icon.pinIcon}  />
+        {/* <Drawer.Screen  name="Captain Portal" component={CaptainPortal_Stack} options={icon.cpIcon}  /> */}
+       {/*  <Drawer.Screen  name="Change PIN" component={screens.ChangePin} options={icon.pinIcon}  />
         <Drawer.Screen  name="Change Car" component={screens.ChangeCar} options={ icon.carIcon}  />
-        <Drawer.Screen  name="Notification" component={Home_Stack} options={ icon.skillIcon}  />
+        <Drawer.Screen  name="Notification" component={Home_Stack} options={ icon.skillIcon}  /> */}
 
-        <Drawer.Screen  name="Logout" component={screen.Logout}  options={{
+        {/* <Drawer.Screen  name="Logout" component={screen.Logout}  options={{
                 drawerLabel: () => null,
                 title: null,
                 drawerIcon: () => null
-            }}/>
+            }}/> */}
 
 
         {/*  
@@ -76,101 +76,94 @@ const Drawer  = createDrawerNavigator();
        }}
        headerMode='none'
    >
-       <Stack.Screen  name="Home" component={screens.Home}  
-        options={props => {
-          let parent = props.navigation.dangerouslyGetParent();
-          parent.setOptions({
-            swipeEnabled: true
-          })
-        }}
-       />
+       <Stack.Screen  name="Home" component={screens.Home}  />
  
    </Stack.Navigator>
     )
 }
  
-const CaptainPortal_Stack = ()=> 
-{
-    return(
-   <Stack.Navigator 
-       initialRouteName="CaptainPortal"
-       screenOptions={{
-         animationEnabled: false
-       }}
-       headerMode='none'
-   >
-       <Stack.Screen  name="CaptainPortal" component={screens.CaptainPortal}  
-        options={props => {
-          let parent = props.navigation.dangerouslyGetParent();
-          parent.setOptions({
-            swipeEnabled: true
-          })
-        }}
-       />
+// const CaptainPortal_Stack = ()=> 
+// {
+//     return(
+//    <Stack.Navigator 
+//        initialRouteName="CaptainPortal"
+//        screenOptions={{
+//          animationEnabled: false
+//        }}
+//        headerMode='none'
+//    >
+//        <Stack.Screen  name="CaptainPortal" component={screens.CaptainPortal}  
+//         // options={props => {
+//         //   let parent = props.navigation.dangerouslyGetParent();
+//         //   parent.setOptions({
+//         //     swipeEnabled: true
+//         //   })
+//         // }}
+//        />
 
-<Stack.Screen  name="Profile" component={screens.Profile}  
-        options={props => {
-          let parent = props.navigation.dangerouslyGetParent();
-          parent.setOptions({
-            swipeEnabled:false
-          })
-        }}
-       />
+// <Stack.Screen  name="Profile" component={screens.Profile}  
+//         // options={props => {
+//         //   let parent = props.navigation.dangerouslyGetParent();
+//         //   parent.setOptions({
+//         //     swipeEnabled:false
+//         //   })
+//         // }}
+//        />
 
-<Stack.Screen  name="Tripstack" component={Trips_Stack}  
-        options={props => {
-          let parent = props.navigation.dangerouslyGetParent();
-          parent.setOptions({
-            swipeEnabled:false
-          })
-        }}
-       />
+// {/* <Stack.Screen  name="Tripstack" component={Trips_Stack}  
+//         options={props => {
+//           let parent = props.navigation.dangerouslyGetParent();
+//           parent.setOptions({
+//             swipeEnabled:false
+//           })
+//         }}
+//        /> */}
 
-<Stack.Screen  name="TripDetail" component={screens.TripDetail}  
-        options={props => {
-          let parent = props.navigation.dangerouslyGetParent();
-          parent.setOptions({
-            swipeEnabled:false
-          })
-        }}
-       />
+// {/* <Stack.Screen  name="TripDetail" component={screens.TripDetail}  
+//         options={props => {
+//           let parent = props.navigation.dangerouslyGetParent();
+//           parent.setOptions({
+//             swipeEnabled:false
+//           })
+//         }}
+//        />
+//        */}
+  
+//    </Stack.Navigator>
+//     )
+// }
+ 
+
+// const Trips_Stack = ()=> 
+// {
+//     return(
+//    <Stack.Navigator 
+//        initialRouteName="Trips"
+//        screenOptions={{
+//          animationEnabled: false
+//        }}
+//        headerMode='none'
+//    >
+//        <Stack.Screen  name="Trips" component={screens.Trips}  
+//         options={props => {
+//           let parent = props.navigation.dangerouslyGetParent();
+//           parent.setOptions({
+//             swipeEnabled: false
+//           })
+//         }}
+//        />
+ 
+
+// <Stack.Screen  name="TripDetail" component={screens.TripDetail}  
+//         options={props => {
+//           let parent = props.navigation.dangerouslyGetParent();
+//           parent.setOptions({
+//             swipeEnabled:false
+//           })
+//         }}
+//        />
       
   
-   </Stack.Navigator>
-    )
-}
- 
-
-const Trips_Stack = ()=> 
-{
-    return(
-   <Stack.Navigator 
-       initialRouteName="Trips"
-       screenOptions={{
-         animationEnabled: false
-       }}
-       headerMode='none'
-   >
-       <Stack.Screen  name="Trips" component={screens.Trips}  
-        options={props => {
-          let parent = props.navigation.dangerouslyGetParent();
-          parent.setOptions({
-            swipeEnabled: false
-          })
-        }}
-       />
- 
-
-<Stack.Screen  name="TripDetail" component={screens.TripDetail}  
-        options={props => {
-          let parent = props.navigation.dangerouslyGetParent();
-          parent.setOptions({
-            swipeEnabled:false
-          })
-        }}
-       />
-      
-  
-   </Stack.Navigator>
-    )
-}
+//    </Stack.Navigator>
+//     )
+// }

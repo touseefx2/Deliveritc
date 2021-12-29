@@ -19,7 +19,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import { inject, observer } from "mobx-react"; 
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import GVs from '../../../store/Global_Var';
+import GVs from '../../../stores/Global_Var';
 
   export default inject("store")(observer(ChangePin));
 

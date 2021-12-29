@@ -1,4 +1,4 @@
-import React ,{useEffect,useRef,useState} from 'react';
+import React ,{useEffect,useState} from 'react';
 import {View,Alert,AppState} from 'react-native';
 import styles from './styles';
 import theme from "../../../themes/index"
@@ -6,147 +6,141 @@ import utils from "../../../utils/index"
 import { Switch } from 'react-native-switch';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import moment from 'moment';
+import db from "../../../database/index" 
 
 import { inject, observer } from "mobx-react"; 
   
-export default inject("store")(observer(Header));
+export default inject("userStore","generalStore","carStore")(observer(Header));
 
    function Header (props)   {
    
-	const {user,changeuser,setuser,isInternet ,setac} = props.store;
+	// const {user,changeuser,setuser,isInternet ,setac} = props.store;
+
+	const {isInternet,appState} = props.generalStore;
+	const {user,setUser,authToken,online,setonline} = props.userStore;
+	const {cars,setCars} = props.carStore;
+
 	const [newState, setnewState] = useState(AppState.currentState);
-	const [activeChecked, setActiveChecked] = useState(user.online);
+	const [activeChecked, setActiveChecked] = useState(online);
 	 
-	useEffect(() => {
-     
-		  AppState.addEventListener('change', handleChange);  
-		return () => {
-		  AppState.removeEventListener('change', handleChange);  
 	 
-		}
-	}, [])
-
-	useEffect(() => {
+// 	useEffect(() => {
 	 
-	 if (newState === "active") {
+// 	 if (appState === "active") {
 			
-			let u  = {...user}
+// 			let u  = {...user}
 		 
-			u.online=activeChecked
+// 			u.online=activeChecked
 			
-		   if(activeChecked==true){
+// 		   if(activeChecked==true){
 	
 	
-    if(u.onlineTime.length>0){
-	  let c=false;
+//     if(u.onlineTime.length>0){
+// 	  let c=false;
 
-	  u.onlineTime.map((e,i,a)=>{
-		//  console.log("eeee if ac true : ",e)
+// 	  u.onlineTime.map((e,i,a)=>{
+// 		//  console.log("eeee if ac true : ",e)
 	
-		 let ddd=new Date();
-		 var sd =  moment(ddd).format("ddd D MMM");
+// 		 let ddd=new Date();
+// 		 var sd =  moment(ddd).format("ddd D MMM");
 	
-		 if(sd==e.sdate){
+// 		 if(sd==e.sdate){
 	
-		  if(e.online==true){
-		    c=true
-		  }
-	
-	
-		 }
+// 		  if(e.online==true){
+// 		    c=true
+// 		  }
 	
 	
-	  })
+// 		 }
+	
+	
+// 	  })
 
-	if(c==false){
-	  let ddd=new Date();
-	  var sd =  moment(ddd).format("ddd D MMM");
-	  var st =  moment(ddd).format('hh:mm:ss a')  
+// 	if(c==false){
+// 	  let ddd=new Date();
+// 	  var sd =  moment(ddd).format("ddd D MMM");
+// 	  var st =  moment(ddd).format('hh:mm:ss a')  
 	 
 	
-	  const d={sdate:sd,edate:"",stime:st,etime:"",online:activeChecked,seconds:0,sd:ddd,ed:""}
-	  u.onlineTime.push(d)
-	  storeUserData(u)
-	}
-	}
+// 	  const d={sdate:sd,edate:"",stime:st,etime:"",online:activeChecked,seconds:0,sd:ddd,ed:""}
+// 	  u.onlineTime.push(d)
+// 	  storeUserData(u)
+// 	}
+// 	}
 		 
-		  } 
-		}
+// 		  } 
+// 		}
 
-		if (newState === "background") {
+// 		if (appState === "background") {
 		 
 
-			let u  = {...user}
+// 			let u  = {...user}
 		 
 		 
-			if(activeChecked==true){
+// 			if(activeChecked==true){
 
 
-				if(u.onlineTime.length>0){
+// 				if(u.onlineTime.length>0){
  
-					u.onlineTime.map((e,i,a)=>{
+// 					u.onlineTime.map((e,i,a)=>{
 					  
 				
-					   let ddd=new Date();
-					   var sd =  moment(ddd).format("ddd D MMM");
+// 					   let ddd=new Date();
+// 					   var sd =  moment(ddd).format("ddd D MMM");
 				 
-					   if(sd==e.sdate){
+// 					   if(sd==e.sdate){
 				
-						if(e.edate=="" &&  e.online==true){
+// 						if(e.edate=="" &&  e.online==true){
 							 
-							let ddd=new Date();
-							var ed =  moment(ddd).format("ddd D MMM");
-							var et =  moment(ddd).format('hh:mm:ss a')  
+// 							let ddd=new Date();
+// 							var ed =  moment(ddd).format("ddd D MMM");
+// 							var et =  moment(ddd).format('hh:mm:ss a')  
 						   
-							var sst = moment(e.stime, "hh:mm:ss a");
-							var eet = moment(et, "hh:mm:ss a");
-							var duration = moment.duration(eet.diff(sst));
-							var sec = parseInt(duration.asSeconds());
+// 							var sst = moment(e.stime, "hh:mm:ss a");
+// 							var eet = moment(et, "hh:mm:ss a");
+// 							var duration = moment.duration(eet.diff(sst));
+// 							var sec = parseInt(duration.asSeconds());
 						
 		
 		
-						u.onlineTime[i].edate=ed
-						u.onlineTime[i].ed=ddd
-						u.onlineTime[i].etime=et
-						u.onlineTime[i].seconds=sec
-						u.onlineTime[i].online=false
+// 						u.onlineTime[i].edate=ed
+// 						u.onlineTime[i].ed=ddd
+// 						u.onlineTime[i].etime=et
+// 						u.onlineTime[i].seconds=sec
+// 						u.onlineTime[i].online=false
 
-						storeUserData(u)
+// 						storeUserData(u)
 						
-									}
+// 									}
 				
 				
-					   }
+// 					   }
 				
 				
-					})
+// 					})
 	              
-				}
+// 				}
 
 
-			}
+// 			}
 
 		
-		}
+// 		}
 
-		if (newState === "inactive") {
+// 		if (appState === "inactive") {
 		   
-		}
+// 		}
 
-console.log("AppState ",newState)		
-	}, [newState])
+// console.log("AppState ",appState)		
+// 	}, [appState])
 
-	  const handleChange = (nextAppState) => {
-		  setnewState(nextAppState);
-	  }
-	
-	useEffect(() => {
- 	    
-	     props.setActiveChecked(activeChecked)
-	     checkTime(activeChecked)
-		 
-	 }, [activeChecked])
+ useEffect(() => {
+ props.setActiveChecked(online)
+ setActiveChecked(online)
+ }, [online])
+   
 	 
+
 	const checkTime=(achk)=>{
 		let u  = {...user}
 		u.online=achk
@@ -277,8 +271,7 @@ if(c==false){
 	const goOffline=(s)=>{
 
 		if(isInternet){
-				setActiveChecked(s)
-			 
+			UpdateUser(s)	 
 		}else{
 			let msg="Please connect internet"
 			utils.ToastAndroid.ToastAndroid_SBC(msg)
@@ -287,10 +280,52 @@ if(c==false){
 
 	}
 
+	const UpdateUser =(s)=>{
+        
+		props.setLoader(true);
+
+        //update user
+          let uid= user._id
+          const bodyData={is_online:s}
+          const header= authToken;
+         
+           // method, path, body, header
+           db.api.apiCall("put",db.link.updateUser+uid,bodyData,header )
+          .then((response) => {
+               
+            console.log("Update user  response : " , response);
+            
+                if(response.data){
+                  setUser(response.data)
+				  setonline(response.data.is_online)
+				  setActiveChecked(response.data.is_online)
+				  props.setLoader(false);
+                  return
+                  }
+        
+                 if(!response.data){
+					props.setLoader(false);
+                    utils.AlertMessage("",response.message)
+                   return
+                  }
+    
+            	  props.setLoader(false);
+                return
+         
+          }).catch((e) => {
+			props.setLoader(false);
+             utilsS.AlertMessage("","Network request failed");
+             console.error("Update user   catch error : ", e)
+            return;
+          })
+    
+    
+        
+          }
+
 	const goOnline=(s)=>{
 	if(isInternet){
-				setActiveChecked(s)
-			 
+      UpdateUser(s)		    
 		}else{
 			let msg="Please connect internet"
 			utils.ToastAndroid.ToastAndroid_SBC(msg)
@@ -335,8 +370,7 @@ if(c==false){
 
 	
 	}
-
-	 
+ 	 
  
   return(
  

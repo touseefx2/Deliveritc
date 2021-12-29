@@ -1,6 +1,7 @@
 import React,{useState,useEffect} from "react";
 import NetInfo from "@react-native-community/netinfo";
 import Stack from "./src/navigation/index"
+import {AppState} from 'react-native';
 import {screens} from "./src/screens/index";
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -11,48 +12,53 @@ import DeviceInfo from 'react-native-device-info';
 import { NetworkInfo } from "react-native-network-info";
 import {ApplicationProvider,} from '@ui-kitten/components';
 import * as eva from '@eva-design/eva';
-  
-export default inject("store")(observer(App));
+import ConnectivityManager from 'react-native-connectivity-status'
+
+export default inject("userStore","generalStore")(observer(App));
 
  function App(props)  {
 
   const RootStack = createStackNavigator();
-  const {setisInternet, setapiLevel,setip,user}=props.store;
-  const [loader,setloader] = useState(true);
-
-const handleConnectivityChange = state => {
-  if (state.isConnected)
-     setisInternet(true)
-  else
-    setisInternet(false)
-};
+  
+  const {user,loader} =  props.userStore;
+  const {setLocation,setInternet,setdeviceApi,setappState,isInternet} =  props.generalStore;
 
  
-useEffect(()=>{
-  
-  GlobalFont.applyGlobal(theme.fonts.fontNormal) 
-  NetInfo.addEventListener(handleConnectivityChange);
-  DeviceInfo.getApiLevel().then((apiLevel) => { setapiLevel(apiLevel)});
-  NetworkInfo.getIPAddress().then(ipAddress => { setip(ipAddress)});
-  return () => {
-    console.log("app close")
+ 
+  const handleChange = (newState) => {
+    setappState(newState)
   }
-},[])
 
-useEffect(() => {
-   if(user!=""){
-    setTimeout(() => {
-    }, 2500);
-   }else if(user==""){
-    setTimeout(() => {
-      setloader(false)
-    }, 2500);
-   }
-}, [user])
+useEffect(async () => {
+  GlobalFont.applyGlobal(theme.fonts.fontNormal) 
+   const locationServicesAvailable = await ConnectivityManager.areLocationServicesEnabled();
+   setLocation(locationServicesAvailable)
+   const connectivityStatusSubscription = ConnectivityManager.addStatusListener(({ eventType, status }) => {
+    switch (eventType) {
+      case 'location':
+         setLocation(status)
+        break;
+    }
+    })
+    const unsubscribe = NetInfo.addEventListener(state => {
+      //  console.log("Connection type", state.type);
+      setInternet(state.isConnected)
+   
+    });
+    setappState("active")
+    AppState.addEventListener('change', handleChange); 
+    DeviceInfo.getApiLevel().then((apiLevel) => {setdeviceApi(apiLevel)});
 
+  return () => {
+     connectivityStatusSubscription.remove();
+     unsubscribe();
+     AppState.removeEventListener('change', handleChange);
+  }
+  
+}, [])
 
-console.log("user : ",user)
-
+ 
+ 
    return ( 
 <ApplicationProvider  {...eva} theme={eva.light}>  
 <NavigationContainer>
@@ -63,21 +69,17 @@ console.log("user : ",user)
   <RootStack.Screen  name='Splash' component={screens.Splash}/>
 )}
 
-{(!loader && user==""  )&&(
+{(!loader && !user  )&&(
  <RootStack.Screen name='authStack' component={Stack.authStack}/>
+)}
+
+  {(!loader && user  && !user.terms_accepted )&&(
+   <RootStack.Screen name='SelectCar' component={screens.SelectCar}/>
 )}
 
  
 
-  {(!loader && user!="" && user.sigin==true && user.acceptterm==true && user.selectedCar=="" )&&(
- <RootStack.Screen name='SelectCar' component={screens.SelectCar}/>
-)}
-
-{(!loader && user!="" && user.sigin==true && user.acceptterm==false && user.selectedCar=="" )&&(
- <RootStack.Screen name='SelectCar' component={screens.AcceptTerms}/>
-)}
-
-{(!loader && user!=""  && user.sigin==true && user.acceptterm==true &&  user.selectedCar!="" )&&(
+{(!loader && user  && user.terms_accepted )&&(
  <RootStack.Screen name='captainStack' component={Stack.captainStack}/>
 )}
  

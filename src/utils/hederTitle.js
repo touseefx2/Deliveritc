@@ -1,7 +1,7 @@
 import React, { useEffect }  from "react";
 import { View,StyleSheet,Text} from "react-native";
 import utils from "./index"
-import GVs from "../store/Global_Var";
+import GVs from "../stores/Global_Var";
 import { inject, observer } from "mobx-react"; 
 
 

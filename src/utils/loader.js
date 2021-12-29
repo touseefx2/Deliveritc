@@ -4,7 +4,7 @@ import theme from "../themes/index"
 
 export function Loader (props){
 
-  const bc= (props.location==true || props.dark==true)? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.6)'
+  const bc=  'rgba(0,0,0,0.7)';
 
 return(
     <Modal
@@ -13,12 +13,12 @@ return(
     visible={props.loader}
     >
 
-    <View style={{ flex: 1, backgroundColor: bc, justifyContent: 'center', alignItems: 'center' }}>
+    <View style={{ flex: 1, backgroundColor: bc, justifyContent: 'center', alignItems: 'center',padding:5 }}>
   
-  {props.location==true && (
-  <Text style={{alignSelf:"center",fontSize:14,color:"white"}}>
-  Getting Current Location ....
-  </Text>)}
+    {props.location==true && (
+    <Text style={{alignSelf:"center",fontSize:14,color:"white"}}>
+    Getting Current Location ....
+    </Text>)}
 
     <ActivityIndicator
      size='large'

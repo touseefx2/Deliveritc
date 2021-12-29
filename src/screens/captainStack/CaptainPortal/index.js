@@ -3,7 +3,7 @@ import {Platform,Dimensions,Alert,TouchableOpacity,SafeAreaView,View,Text,Scroll
 import utils from "../../../utils/index"
 import LinearGradient from 'react-native-linear-gradient';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
-import GVs from '../../../store/Global_Var';
+import GVs from '../../../stores/Global_Var';
 import { inject, observer } from "mobx-react"; 
 import MapContainer from '../../Map/MapContainer/index';
 import { Container,NativeBaseProvider } from 'native-base';

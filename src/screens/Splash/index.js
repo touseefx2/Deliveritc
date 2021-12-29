@@ -1,43 +1,34 @@
 import React, {useEffect} from "react";
 import {View,Text,SafeAreaView,Image} from "react-native";
 import {styles} from "./styles"
-import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import theme from "../../themes/index"
 import { inject, observer } from "mobx-react"; 
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import GVs from "../../store/Global_Var"
-
-export default inject("store")(observer(Splash));
+ 
+export default inject("userStore","generalStore","carStore","tripStore")(observer(Splash));
 
  function Splash(props) {
 
-  const {setuser,setcars}=props.store;
-   
+  const {setLoader,user,authToken,notificationToken} =  props.userStore;
+  const {cars} =  props.carStore;
+  const {request,accept} =  props.tripStore;
+  const {isInternet}   =  props.generalStore;
+ 
   useEffect(() => {
-   getUserData();  //in local storage
+    setTimeout(() => {
+      setLoader(false);
+    }, 1500); 
   },[])
 
-  const getUserData = async () => {
-   try {
-      const jsonValue = await AsyncStorage.getItem('userData')
-                  if (jsonValue != null) {
-                   const v = JSON.parse(jsonValue)
-                   let car=[]
-                   if(GVs.cars.length>0){
-                     GVs.cars.map((e,i,a)=>{
-                       if(e.uid==v.id){
-                         car.push(e)
-                       }
-                     })
-                   }
-                 
-                  setcars(car) 
-                  setuser(v)             
-     } 
-   } catch (e) {
-     console.log("get user data error : ", e)
-   }
- }
+  
+  // console.log("user : ",user)
+  // console.log("istermacpt : ",user.terms_accepted)
+  // console.log("cars : ",cars)
+   console.log("at : ",authToken)
+  // console.log("nt : ",notificationToken)
+  
+  console.log("request : ",request)
+  console.log("accept : ",accept)
+
 
   return (
   <SafeAreaView style={styles.container}>

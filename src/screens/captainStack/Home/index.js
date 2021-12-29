@@ -1,214 +1,491 @@
 import React ,{useEffect,useRef,useState} from 'react';
-import {Platform,Dimensions,Alert,TouchableOpacity,View} from 'react-native';
+import {Platform,Dimensions,Alert,TouchableOpacity,View,Text,ScrollView,BackHandler} from 'react-native';
 import utils from "../../../utils/index"
-import LinearGradient from 'react-native-linear-gradient';
-import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
-import GVs from '../../../store/Global_Var';
 import { inject, observer } from "mobx-react"; 
 import MapContainer from '../../Map/MapContainer/index';
 import { Container,NativeBaseProvider, } from 'native-base';
 import RNAndroidLocationEnabler from 'react-native-android-location-enabler';
-import Geolocation from '@react-native-community/geolocation';
-import theme  from "../../../themes/index";
-import ConnectivityManager from 'react-native-connectivity-status'
-  
-export default inject("store")(observer(Home));
+// import Geolocation from '@react-native-community/geolocation';
+import Geolocation from 'react-native-geolocation-service';
+import db from "../../../database/index" 
+import Modal from 'react-native-modal';
+
+export default inject("userStore","generalStore","carStore","tripStore")(observer(Home));
+ 
   
  function Home (props)   {
-  const {setisl} = props.store;
+  const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
+  const {cars,setCars} =  props.carStore;
+  const {setrequest,accept,request} = props.tripStore;
+  const {setLocation,isLocation,isInternet} = props.generalStore;
   const [loaderT,setloaderT]=useState(false);
-  const [position,setposition]=useState("");
-  const [region,setregion]=useState("");
-  const [err,seterr]=useState("");
+  
+  
+  const [isServerError,setisServerError]=useState("A");
+	const [refresh,setrefresh]=useState(false);
+  const [getcarDataonce,setgetcarDataonce]=useState(false);
+  const [getuserOnce,setguserOnce]=useState(false);
+ 
 
+  const window = Dimensions.get('window');
+	const { width, height }  = window
+	const LATITUDE_DELTA = 0.0922
+	const LONGITUDE_DELTA = LATITUDE_DELTA + (width / height) 
+
+  
   let watchID=null;
 
-   
-//   const subscribeLocation = () => {
-//     watchID= Geolocation.watchPosition((position) => 
-//     {
-//       //  console.log("geo location wathc postn then  : ",position);
-    
-//      const window = Dimensions.get('window');
-//      const { width, height }  = window
-//      const LATITUD_DELTA = 0.0922
-//      const LONGITUDE_DELTA = LATITUD_DELTA + (width / height) 
+ 
+  useEffect(() => {
+    if(refresh){
+      if(isInternet){
+      setloaderT(false);setguserOnce(false);setgetcarDataonce(false) 
+      setisServerError("A");setrefresh(false);
+      getCar();getUser();skipTrip()
 
+      if(cl!=""){
+        const bodyData={
+          location:{
+          type:"Point",
+          coordinates: [cl.longitude,cl.latitude]  //long , lat
+          }
+          } 
+          UpdateUser(bodyData,false)
+      }
+
+
+      }else{
+        setrefresh(false);
+        utils.AlertMessage("","Please connect internet !")
+      }
+       
+    }
+  
+  }, [refresh])
+ 
+
+  useEffect(() => {
+    if(isInternet){
+      if(!request){
+       skipTrip()
+      }
+    }
+  }, [request,isInternet])
+
+
+  const skipTrip=()=>{
+ 
+      const bodyData={}
+      const uid=user._id
+      const header=authToken;
+      // method, path, body, header
+      db.api.apiCall("put",db.link.skipTrip+uid,bodyData,header)
+      .then((response) => {
+            
+        console.log("Skip trip response : " , response);
+            
+            if(response.success){
+            // utils.ToastAndroid.ToastAndroid_SB("Skip") ;
+            
+            return;
+             }
+   
+             if(!response.success){
+                  // utils.AlertMessage("",response.message)
+                 return;
+                 }
      
-//  const r= 
-//     {
-//      latitude: position.coords.latitude ,
-//      longitude: position.coords.longitude  ,
-//      latitudeDelta:LATITUD_DELTA,
-//      longitudeDelta: LONGITUDE_DELTA,
-//    }
-//        setcl(r)
-//     },
-//     (error) => {
-//       console.log("geo location watch postn error : ",error)
-//     },
-//     { 
-//       accuracy: {
-//         android: 'high',
-//         ios: 'best',
-//       },
-//         enableHighAccuracy: true,
-//         maximumAge: 1000,
-//         timeout:10000,
-//         distanceFilter:10,  //10 meter
-//        showsBackgroundLocationIndicator:true
-//     }
-//     )
-  
-//   }
- 
-  const getCurrentLocation =async  ()=>{
- 
-     setloaderT(true)
-    Geolocation.getCurrentPosition(
-    (position) => {       
-       setposition(position)
-       setloaderT(false)
-      },
-      (error) => {
-        setloaderT(false)
-        console.log("geo location error : ",error)
-  
-        if(error.code==3){
+          return;
+      }).catch((e) => {
         
-          Alert.alert(
-            "",
-            "Get Location Request Timeout !",
-            [
-              // {
-              //   text: "No",
-              //   onPress: () => console.log("Cancel Pressed"),
-              //   style: "cancel"
-              // },
-              { text: "Retry", onPress: () =>  { setloaderT(true);locationEnabler()  }}
-            ]
-          );
-      
-        }
-  
-        if(error.code==2  ){
-          locationEnabler()
-        }
-  
-  
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 20000,
-        maximumAge: 3600000 }
-  );
-   
-   
-  }  
+        //  utils.AlertMessage("","Network request failed");
+         console.error("Skip trip   catch error : ", e)
+        return;
+      })
 
+ 
+  }
+
+  const subscribeLocation = () => {
+    watchID= Geolocation.watchPosition((position) => 
+   {
+setloaderT(false);
+  const bodyData={
+   location:{
+     type:"Point",
+     coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
+   }
+ }
+  
+  const r= 
+  {
+  latitude: position.coords.latitude ,
+  longitude: position.coords.longitude    ,
+  latitudeDelta:LATITUDE_DELTA,
+  longitudeDelta: LONGITUDE_DELTA,
+  }
+  setcl(r)
+
+  if(isInternet){
+    UpdateUser(bodyData,false)  
+   }  
+ 
+   },
+   (error) => {
+     console.log("geo location watch postn error : ",error)
+   },
+   { 
+       showsBackgroundLocationIndicator:true,
+      //  enableHighAccuracy:false,
+      //  maximumAge: 3000,
+      //  timeout:30000,
+        enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  ,
+       distanceFilter:15,
+  
+   }
+   )
+ 
+ }
+ 
+ const onLogout=()=>{
+  setCars(false) 
+  Logout();
+ }
+
+   useEffect (() => {
+   if(isInternet){
+  subscribeLocation()
+   }else{
+    Geolocation.clearWatch(watchID);
+    Geolocation.stopObserving()
+    watchID=null;
+   }
+ }, [isInternet])
+
+const getCurrentLocationOne=()=>{
+setloaderT(true)
+Geolocation.getCurrentPosition(
+  
+async (position) => {
+
+console.log("cpstn : ",position)
+setloaderT(false);
+
+const bodyData={
+location:{
+type:"Point",
+coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
+}
+} 
+  
+  // utils.AlertMessage("","Please connect internet ! ")
+  const r= 
+  {
+  latitude: position.coords.latitude ,
+  longitude: position.coords.longitude    ,
+  latitudeDelta:LATITUDE_DELTA,
+  longitudeDelta: LONGITUDE_DELTA,
+  }
+  setcl(r)
+  
+  if(isInternet){
+  UpdateUser(bodyData,false)  
+  }  
+   
+  },
+  (error) => {
+    setloaderT(false)
+    if(error.code==3){
+      if(cl==""){
+           getCurrentLocationOne()
+      }
+    
+      }
+
+   console.log("get crnt loc one error : ",error.message);
+
+   
+  },
+  {
+      // enableHighAccuracy: false,
+      // timeout: 30000,
+      // maximumAge:3000
+     
+       enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  
+  },
+  );
+ 
+}
+
+const UpdateUser=(location,suc)=>{
+	//update user
+	  let uid= user._id
+	  const bodyData= location
+	  const header= authToken;
+ 
+	  // method, path, body, header
+	  db.api.apiCall("put",db.link.updateUser+uid,bodyData,header)
+	  .then((response) => {
+		     
+		  	 console.log("Update user location response : " , response.data.location);
+        
+			 
+         if(response.msg=="Invalid Token"){
+          utils.AlertMessage("",response.msg) ;
+          onLogout()
+          return;
+         }
+
+			 if(response.data){
+			     
+			  	 setUser(response.data);
+            const r= 
+            {
+            latitude:  response.data.location.coordinates[1] ,
+            longitude: response.data.location.coordinates[0]    ,
+            latitudeDelta:LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA,
+            }
+           setcl(r)
+			  
+			if(suc){
+					subscribeLocation()
+				}
+			  
+				 
+			 }
+	
+			 if(!response.data){
+         utils.ToastAndroid.ToastAndroid_SB(response.message)
+        return;	 
+		  }
+ 
+      
+		  return;
+	  }).catch((e) => {
+	   
+            utils.ToastAndroid.ToastAndroid_SB("Server error location not upate in backend")
+		       console.error("Update user location catch error : ", e)
+	        	return;
+	  })
+	
+		}
+
+    useEffect(() => {
+	
+      if(isLocation){
+        getCurrentLocationOne()
+      }
+    
+      if(!isLocation){
+        Geolocation.clearWatch(watchID);
+        Geolocation.stopObserving()
+        watchID=null;
+        locationEnabler()
+      }
+    
+     
+    }, [isLocation])
+    
+    const getCar=()=>{
+     
+      setisServerError("A")
+      let uid=user._id
+      const bodyData=false
+      const header=authToken;
+     
+      // method, path, body, header
+      db.api.apiCall("get",db.link.getCar+uid,bodyData,header)
+      .then((response) => {
+
+             setisServerError(false)
+             console.log("Get car response : " , response);
+        
+             if(response.msg=="Invalid Token"){
+               utils.AlertMessage("",response.msg) ;
+               onLogout()
+              return;
+             }
+
+             if(!response.data){
+              // utils.AlertMessage("",response.message) ;
+              return;
+             }
+    
+             if(response.data){
+               setCars(response.data[0]);
+               setgetcarDataonce(true);
+               return;
+             }
+          
+             return;
+     
+      }).catch((e) => {
+          setisServerError(true)
+        // utilsS.AlertMessage("","Network request failed");
+         console.error("Get car catch error : ", e)
+         return;
+      })
+    
+     }
+
+     const getUser=()=>{
+		  
+      const bodyData=false
+      const header=authToken;
+      const uid=user._id
+   
+  
+      // method, path, body, header
+      db.api.apiCall("get",db.link.getUserById+uid,bodyData,header)
+      .then((response) => {
+           
+           console.log("getuser response : " , response);
+   
+           if(!response.data){
+          setguserOnce(false)
+          //  utils.AlertMessage("", response.message ) ;
+          return;
+           }
+      
+      
+           if(response.data){
+              setUser(response.data[0]);
+              setonline(response.data[0].is_online);
+              setguserOnce(true)
+           return;
+           }
+        
+         
+           return;
+       
+      }).catch((e) => {
+  
+         console.error("getuser catch error : ", e)
+        return;
+      })
+  
+      }
+
+     useEffect(() => {
+       if(isInternet){
+         if(!getcarDataonce){
+           getCar()
+           }
+
+           if(!getuserOnce){
+             getUser()
+           }
+ 
+
+       }
+ 
+     }, [isInternet])
+
+  
+    useEffect(() => {
+  
+      return()=>{
+        Geolocation.clearWatch(watchID);
+        Geolocation.stopObserving()
+        watchID=null;
+      }
+    }, [])
+  
   const locationEnabler=()=>{
 
     RNAndroidLocationEnabler.promptForEnableLocationIfNeeded({
       interval: 10000,
       fastInterval: 5000,
-    }).then((data) => {
-     
-        seterr(""),
-        setisl(true)
-         getCurrentLocation();
-        //  subscribeLocation();
-        
+    }).then((data) => { 
+
       }).catch((err) => {
-  console.log("location enabler popup error : ",err)
-   let msg="";
-   seterr(1)
-  msg="Please Turn On Location"
-  utils.ToastAndroid.ToastAndroid_LB(msg)
-  
-        // The user has not accepted to enable the location services or something went wrong during the process
-        // "err" : { "code" : "ERR00|ERR01|ERR02|ERR03", "message" : "message"}
-        // codes :
-        //  - ERR00 : The user has clicked on Cancel button in the popup
-        //  - ERR01 : If the Settings change are unavailable
-        //  - ERR02 : If the popup has failed to open
-        //  - ERR03 : Internal error
+    console.log("location enabler popup error : ",err)
+   
+    setTimeout(() => {
+      locationEnabler()
+    }, 5000);
+      
       });
   }
- 
-  useEffect(()=>{
-    // setRequest();
-    if(GVs.trips.length>0){
-      // settrip() //get all trips of this captain accrdng 
-    }
-
-  },[])
+  
  
   useEffect(() => {
  
     if (Platform.OS === 'ios') {
-         getCurrentLocation();
-         subscribeLocation();
-         fcmService.registerAppwithFCM();//forios
+        //  getCurrentLocation();
+        //  subscribeLocation();
     } else{
       locationEnabler();
     }
-
-    const connectivityStatusSubscription = ConnectivityManager.addStatusListener(({ eventType, status }) => {
-      switch (eventType) {
-        case 'location':
-              // console.log(`Location Services are ${status ? 'AVAILABLE' : 'NOT available'}`)
-              setisl(status)
-            break
-      }
-    })
-
+ 
     return () => {
      Geolocation.clearWatch(watchID);
-     connectivityStatusSubscription.remove()
     }
   }, [])
 
+  const renderServerError=()=>{
+    return(
+      <Modal 
+	  isVisible={isServerError==true?true:false}
+      backdropOpacity={0.7}
+      animationIn="fadeInUp"
+      animationOut="fadeOutDown"
+      animationInTiming={400}
+      animationOutTiming={0}
+      backdropTransitionInTiming={400}
+      backdropTransitionOutTiming={0}
+      onRequestClose={() => { 
+        console.log("yes")
+        // setisServerError(false)
+       }}
+   >
   
-  useEffect(() => {
-   
-    if(position!=""){
+      <View style=
+      {{
+      backgroundColor:"white", 
+      borderRadius:10,
+      padding:20,
+      alignSelf: 'center',
+	  width:300,
+      }}>
+ 
+     
+     <Text  style={{fontSize:17,color:"black"}}> 
+      Server not respond
+    </Text> 
 
-      const window = Dimensions.get('window');
-      const { width, height }  = window
-      const LATITUD_DELTA = 0.0922
-      const LONGITUDE_DELTA = LATITUD_DELTA + (width / height) 
+	<View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%",marginTop:40,alignSelf:"center"}}>
 
-      
-  const r= 
-     {
-      latitude: position.coords.latitude ,
-      longitude: position.coords.longitude  ,
-      latitudeDelta:LATITUD_DELTA,
-      longitudeDelta: LONGITUDE_DELTA,
-    }
-  
+	<View style={{width:"60%",alignItems:"flex-end"}}>
+	<TouchableOpacity onPress={()=>{BackHandler.exitApp()}}>
+	<Text style={{fontSize:18,color:"black",textTransform:"capitalize"}}> 
+		exit
+	</Text>
+	</TouchableOpacity> 
+	</View>
 
-  // setcl(r)
-  setregion(r)
+	<View style={{width:"25%",alignItems:"flex-end"}}>
+	<TouchableOpacity onPress={()=>{setrefresh(true)}}>
+	<Text style={{fontSize:18,color:"black",textTransform:"capitalize"}}> 
+		retry
+	</Text>
+	</TouchableOpacity> 
+	</View>
 
-}
 
-  }, [position])
-  
+	</View>
+ 
+      </View>
+    </Modal>
+    )
+  }
     
-
-  return(
+return(
  <NativeBaseProvider>
+{!loaderT && renderServerError()}
 <utils.Loader location={true} loader={loaderT} />
-{region!="" && err=="" &&(<MapContainer propsH={props}    region={region}/>  )}
-{region=="" && err=="" && (<theme.Text style={{position:"absolute",marginTop:hp("50%"),fontSize:16,color:"black",alignSelf:"center"}}> Map is Loading ...</theme.Text>)}
-{err==1&& (
- <TouchableOpacity 
- onPress={()=>{locationEnabler()}}
- style={{backgroundColor:theme.color.buttonLinerGC1,position:"absolute",marginTop:hp("50%"),alignSelf:"center",width:150,height:40,alignItems:"center",justifyContent:"center"}}>
-<theme.Text style={{fontSize:15,color:"white"}}>Turn On Location</theme.Text>
- </TouchableOpacity> 
-  )}
+<MapContainer propsH={props}   /> 
 </NativeBaseProvider>
 )
     

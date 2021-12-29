@@ -8,16 +8,22 @@ import RNGooglePlaces from 'react-native-google-places';
 import { inject, observer } from "mobx-react"; 
  
 
-   export default inject("store")(observer(SearchBox));
+export default inject("userStore","generalStore","carStore")(observer(SearchBox));
 
    function SearchBox (props)   {
 
   // const { user,setuser} = props.store;
 //  const accept=props.accept
+
+// const {isInternet,isLocation}  = props.generalStore;
+// const {user,setUser} = props.userStore;
+// const {cars,setCars} = props.carStore;
+
+
  const search=props.Search;
   
   const GooglePlacesInput = () => {
-    RNGooglePlaces.openAutocompleteModal({
+      RNGooglePlaces.openAutocompleteModal({
       initialQuery:"", 
       country: 'PK',
       
@@ -50,18 +56,17 @@ import { inject, observer } from "mobx-react";
 })
 .catch(error => console.log(error.message));
  
- 
 };
  
   return(
   <View style={styles.searchBox}>  
  	 
-	   <TouchableOpacity style={{width:"20%"}}  onPress={()=>{Keyboard.dismiss();props.propsH.navigation.openDrawer()}}>
+	     <TouchableOpacity style={{width:"12%"}}  onPress={()=>{Keyboard.dismiss();props.propsH.navigation.openDrawer()}}>
        <utils.vectorIcon.Ionicons  name="md-menu" size={30} color="black" />
        </TouchableOpacity>
 
  {search==""&&(
-  <TouchableOpacity style={styles.inputWrapper} onPress={()=>GooglePlacesInput()}> 
+<TouchableOpacity style={styles.inputWrapper} onPress={()=>GooglePlacesInput()}> 
 <utils.vectorIcon.MaterialIcons name="location-on" size={25} color={theme.color.buttonLinerGC1} /> 
 <theme.Text style={{fontSize:14,marginLeft:5}}>Add destination</theme.Text>
 </TouchableOpacity>
@@ -75,6 +80,10 @@ import { inject, observer } from "mobx-react";
 </TouchableOpacity>
 </View >
  )}
+
+    <TouchableOpacity   style={{width:"12%",backgroundColor:"white",opacity:0.8,borderRadius:5,alignItems:"center",justifyContent:"center",paddingHorizontal:3,height:40}}   onPress={()=>props.gotoCurrentLoc()} >	 
+	   <utils.vectorIcon.MaterialIcons name="my-location" color="#0E47A1" size={27} />
+	   </TouchableOpacity>
 
 	 		 
   </View>

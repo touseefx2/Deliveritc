@@ -56,6 +56,12 @@ const styles = StyleSheet.create({
 		fontSize:theme.fonts.buttonLinerfontSize,
 		fontFamily:theme.fonts.fontMedium
 	},
+	LinearGradienta:{
+		width:'100%',
+		borderRadius:4,
+		justifyContent:'center',
+		alignItems:'center'
+	},
 	LinearGradient:{
 		height:'100%',
 		width:'100%',
@@ -63,12 +69,7 @@ const styles = StyleSheet.create({
 		justifyContent:'center',
 		alignItems:'center'
 	},
-	LinearGradienta:{
-		width:'100%',
-		borderRadius:4,
-		justifyContent:'center',
-		alignItems:'center'
-	},
+
 	root: { 
 		flex: 1, 
 		padding: 10 

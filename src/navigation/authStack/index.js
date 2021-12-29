@@ -13,8 +13,8 @@ const  Stack = createStackNavigator();
        >
 
        <Stack.Screen  name="Login" component={screen.Login}  />
-       <Stack.Screen  name="SigninPin" component={screen.SigninPin}   />
-       <Stack.Screen  name="ResetPin" component={screen.ResetPin}  />
+       <Stack.Screen  name="OTP" component={screen.Otp}   />
+       {/*  <Stack.Screen  name="ResetPin" component={screen.ResetPin}  /> */}
    
     </Stack.Navigator>
     )

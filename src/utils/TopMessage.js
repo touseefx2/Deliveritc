@@ -6,9 +6,18 @@ import theme from "../themes/index";
 
 export default function ToptMessage(props){
   
-   return(
-      <View style={{backgroundColor:"black",padding:2}}>
-       <theme.Text style={{alignSelf:"center",color:"white",fontSize:14}}>{props.msg}</theme.Text>
-       </View>
-   )
+   if(props.screen!="Login"){
+      return(
+         <View style={{backgroundColor:"black",padding:2}}>
+          <theme.Text style={{alignSelf:"center",color:"white",fontSize:14}}>{props.msg}</theme.Text>
+          </View>
+      )
+   }else{
+      return(
+         <View style={{ }}>
+          <theme.Text style={{alignSelf:"center",color:"red",fontSize:14}}>{props.msg}</theme.Text>
+          </View>
+      )
+   }
+
 }

@@ -12,7 +12,7 @@ import * as eva from '@eva-design/eva';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from './styles';
 import theme from "../../../themes/index"
-import GVs from '../../../store/Global_Var';
+import GVs from '../../../stores/Global_Var';
 import utils from "../../../utils/index"
 import LinearGradient from 'react-native-linear-gradient';
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';

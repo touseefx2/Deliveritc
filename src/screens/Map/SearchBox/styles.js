@@ -8,17 +8,17 @@ var width = Dimensions.get("window").width; //full width
 const styles = {
     searchBox:{
         top:12,
-        left:0,
         paddingHorizontal:10,
         position:"absolute",
-         width:wp("85%"),
-        //   backgroundColor:"yellow",
+         width:wp("100%"),
+        // backgroundColor:"yellow",
         flexDirection:"row",
         alignItems:"center",
+        justifyContent:"space-between"
     },
     inputWrapper:{
         backgroundColor:"white",
-        width:"80%",
+        width:"60%",
         opacity:0.8,
         borderRadius:2,
         paddingHorizontal:5,

@@ -4,51 +4,61 @@ import {AppRegistry,LogBox,StatusBar} from 'react-native';
 import App from './App';
 import {name as appName} from './app.json';
 import { configure } from "mobx"
-import { Provider } from 'mobx-react';
-import  store from "./src/store/Store/index" 
+// import  store from "./src/store/Store/index" 
 import messaging from '@react-native-firebase/messaging';
 import PushNotification  from 'react-native-push-notification'
 import PushNotificationIOS from "@react-native-community/push-notification-ios";
 import {showNotification} from "./src/services/Notification/showNotification"
- 
+import store from "./src/store/index"
+import { Provider } from 'mobx-react';
+import { create } from 'mobx-persist';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 configure({ useProxies: "never" }) 
 LogBox.ignoreAllLogs(true);
  
 
 PushNotification.configure({ 
    
-  onNotification: async function (notification) {
+    onNotification: async function (notification) {
     console.log("onNOTIFICATION :", notification);
+
+    let data=null;
+    let title=notification.data.trip?"New Trip":notification.title;
+    let msg=notification.message || ""
+
+
 
     if(!notification.data)
     {
         return 
     }
 
+    if(notification.data)
+    {
+      data=notification.data; 
+    }
+
    if(notification.userInteraction==false)
    {
-    showNotification(notification.title,notification.message )
-
-      //only show ntfctn
-      //  onOpenNotification(Platform.OS == "ios" ?  notification.data.item : notification)
+    showNotification(title,msg)
    }
 
    if(notification.userInteraction==true )
   {
-      //  onOpenNotification(Platform.OS == "ios" ?  notification.data.item : notification);
-      console.log("ntfctn click")
-        alert("click notfication :)")
+        console.log("ntfctn click")
    }
    
-    // process the notification
-   // only call calback if not from foreground
-     // (required) Called when a remote is received or opened, or local notification is opened
-  
- notification.finish(PushNotificationIOS.FetchResult.NoData);
+     if(title=="New Trip"){
+       if(data){
+        store.tripStore.getReqById(data.trip)
+       }
+     }
  
-    console.log('OK')
+  notification.finish(PushNotificationIOS.FetchResult.NoData);
+  // console.log('OK')
   },
-  // IOS ONLY (optional): default: all - Permissions to register.
+ 
   permissions: {
     alert: true,
     badge: true,
@@ -64,17 +74,28 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
   // showNotification(remoteMessage.notification.title,remoteMessage.notification.body )
 });
 
+
+const  hydrateStores= async()=> {
+    const hydrate = create({ storage: AsyncStorage });
+    await hydrate('userstore', store.userStore);
+    await hydrate('tripstore', store.tripStore);
+    await hydrate('carstore', store.carStore);
+   
+}
+
 function HeadlessCheck({ isHeadless }) {
   if (isHeadless) {
     // App has been launched in the background by iOS, ignore
     return null;
   }
-  {MainApp()}
+  // {MainApp()}
 }
 
 function MainApp() {
+  hydrateStores();
+ 
   return(
-           <Provider  store={store}>
+            <Provider  {...store}>
                 <App/>
             </Provider>
       

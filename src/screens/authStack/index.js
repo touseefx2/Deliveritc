@@ -1,13 +1,13 @@
  import Login from "./Login/index"
- import Logout from "./Logout/index"
- import SigninPin from "./SiginPin/index"
- import ResetPin from "./ResetPin/index"
+  import Logout from "./Logout/index"
+//  import SigninPin from "./SiginPin/index"
+   import Otp from "./OTP/index"
 
 export   const   screen =
 {
  Login,
-SigninPin,
-ResetPin,
-Logout,
+ Otp,
+// SigninPin,
+// ResetPin,
  
 }

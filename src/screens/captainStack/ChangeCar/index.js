@@ -170,7 +170,7 @@ Enable to get more bookings
      
     })
  
-      if(c.length>0 && c[0]==undefined){
+      if(c.length<=0 || c[0]==undefined){
         const style={marginTop:hp("10%"),alignSelf:"center"}
         return  utils.message.ShowEmptyRecords("Car not found.",style)
       }else{
