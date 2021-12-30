@@ -9,11 +9,16 @@ import RNAndroidLocationEnabler from 'react-native-android-location-enabler';
 import Geolocation from 'react-native-geolocation-service';
 import db from "../../../database/index" 
 import Modal from 'react-native-modal';
+import io from "socket.io-client";
+
 
 export default inject("userStore","generalStore","carStore","tripStore")(observer(Home));
  
   
  function Home (props)   {
+
+  const socket = io("http://10.7.148.47:3001");
+
   const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
   const {cars,setCars} =  props.carStore;
   const {setrequest,accept,request,getReqById,setatime,setaccept} = props.tripStore;
@@ -119,12 +124,18 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   useEffect(() => {
      if(!accept){
        setrequest(false);
-       setatime("")
+       setatime("");
+ 
      }
      
      if(accept){
        if(isInternet){
-        getReqById(request._id,"check")
+        getReqById(request._id,"check");
+
+        socket.on("connect", () => {
+         console.log(`"Socket : I'm connected with the back-end`);
+        });
+
        }
      }
 
@@ -198,7 +209,8 @@ setloaderT(false);
       //  maximumAge: 3000,
       //  timeout:30000,
         enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  ,
-       distanceFilter:15,
+        distanceFilter:15,
+     
   
    }
    )
@@ -266,11 +278,14 @@ coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
 }
 
 const UpdateUser=(location,suc)=>{
+
+
   	//update user
 	  let uid= user._id
 	  const bodyData= location
 	  const header= authToken;
- 
+
+    if(!accept){
 	  // method, path, body, header
 	  db.api.apiCall("put",db.link.updateUser+uid,bodyData,header)
 	  .then((response) => {
@@ -316,6 +331,16 @@ const UpdateUser=(location,suc)=>{
 		       console.error("Update user location catch error : ", e)
 	        	return;
 	  })
+    }else{
+      socket.emit("send_location", {
+        // longitude: longitude,
+        // latitude: latitude,
+        id: socket.id,
+        user_id: uid,
+        bodyData
+      });
+    }
+
 	
 		}
 
@@ -462,7 +487,6 @@ const UpdateUser=(location,suc)=>{
       });
   }
   
- 
   useEffect(() => {
  
     if (Platform.OS === 'ios') {

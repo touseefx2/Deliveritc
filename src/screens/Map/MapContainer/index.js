@@ -82,7 +82,6 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   const [nolpl,setnolpl] = useState(0); //numofline in pickup location in trip modal
 
   const [starCount,setstarCount] = useState(0);
-
  
   const [cash,setcash] = useState("");
  
@@ -112,7 +111,6 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     // setct(waitTime);
   
   }
-
 
   useEffect(() => {
     if(request){
@@ -149,8 +147,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     }
  
   }, [accept,mr])
- 
- 
+  
 
   useEffect(() => {
      if(mr && cl!=""){

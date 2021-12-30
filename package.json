@@ -76,6 +76,7 @@
     "react-native-switch": "^2.0.0",
     "react-native-vector-icons": "^8.1.0",
     "rn-fetch-blob": "^0.12.0",
+    "socket.io-client": "^4.4.0",
     "styled-system": "^5.1.5",
     "toggle-switch-react-native": "^3.2.0"
   },
