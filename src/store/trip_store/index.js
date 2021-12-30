@@ -1,6 +1,7 @@
 import { observable,makeObservable,action } from "mobx";
 import {  persist } from 'mobx-persist'
 import db from "../../database/index"
+import utils from "../../utils";
 import userStore from "../index";  
 import carstore from "../index";
 
@@ -34,7 +35,44 @@ constructor(){
     this.atime=obj
    }
 
-   @action getReqById=(tid)=>{         //get new trip by id
+   @action updateUserTS=()=>{
+  	//update user
+	  let uid= userStore.userStore.user._id
+	  const bodyData= {is_inTrip:false}
+	  const header= userStore.userStore.authToken
+ 
+	  // method, path, body, header
+	  db.api.apiCall("put",db.link.updateUser+uid,bodyData,header)
+	  .then((response) => {
+		     
+		  	 console.log("Update user intrip respone : " , response);
+        
+			 
+         if(response.msg=="Invalid Token"){
+          utils.AlertMessage("",response.msg) ;
+          onLogout()
+          return;
+         }
+
+         if(response.success){
+          this.setaccept(false);
+          this.setatime("");
+          this.setrequest(false);
+          utils.ToastAndroid.ToastAndroid_SBC("Customer cancel this trip !")
+         }
+
+	 
+      
+		  return;
+	  }).catch((e) => {
+	   
+		       console.error("Update  user intrip responecatch error : ", e)
+	        	return;
+	  })
+	
+		}
+
+   @action getReqById=(tid,c)=>{         //get new trip by id
     const bodyData=false
     const header=userStore.userStore.authToken;
    
@@ -57,7 +95,20 @@ constructor(){
            }
   
            if(response.data){
-             this.setrequest(response.data[0])
+             if(c!=="check"){
+              this.setrequest(response.data[0])
+             }else{
+
+              let req=response.data[0];
+
+              if(req.cancelled_by=="customer"){
+                this.updateUserTS();
+                return;
+              }
+              
+               
+
+             }
              return;
            }
         

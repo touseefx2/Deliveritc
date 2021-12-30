@@ -110,8 +110,14 @@ export default inject("userStore","generalStore")(observer(Otp));
 				// auth().signOut();
 			 
 
-	     setUser(userd);addnotificationToken(nt);addauthToken(at)
-		 setloader(false);
+			
+					 addauthToken(at);addnotificationToken(nt);
+					 
+				 setTimeout(() => {
+				     setUser(userd);
+					setloader(false);
+				}, 1000);
+	 
 	}
 
 	const reSend=()=>{

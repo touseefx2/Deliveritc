@@ -16,7 +16,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
  function Home (props)   {
   const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
   const {cars,setCars} =  props.carStore;
-  const {setrequest,accept,request} = props.tripStore;
+  const {setrequest,accept,request,getReqById,setatime,setaccept} = props.tripStore;
   const {setLocation,isLocation,isInternet} = props.generalStore;
   const [loaderT,setloaderT]=useState(false);
   
@@ -34,6 +34,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   
   let watchID=null;
+
 
 
   async function requestPermissions() {
@@ -61,19 +62,18 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 		  }
 
 		  if (g === "never_ask_again") {
-			msg= "Please allow permision to use location in setting in device or reinstall app";
+        msg= "Please allow permision to use location in setting in device or reinstall app and allow permission to continue";
 		  }
       setLocation(false);
       Alert.alert(
-        "",
-        msg
+        '',
+        msg,
         [
-          { text: "OK", onPress: () => locationEnabler()}
-        ]
-      );
-
-
-      return;
+        {text: 'OK', onPress: () => locationEnabler()},
+        ], 
+        { cancelable: false }
+        )
+   return;
 
 		}
 
@@ -116,7 +116,21 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     }
   }, [request,isInternet])
 
+  useEffect(() => {
+     if(!accept){
+       setrequest(false);
+       setatime("")
+     }
+     
+     if(accept){
+       if(isInternet){
+        getReqById(request._id,"check")
+       }
+     }
 
+  }, [accept,isInternet])
+
+  
   const skipTrip=()=>{
  
       const bodyData={}
@@ -195,15 +209,7 @@ setloaderT(false);
   setCars(false) 
   Logout();
  }
-
-   useEffect (() => {
-  if(!isInternet){
-    Geolocation.clearWatch(watchID);
-    Geolocation.stopObserving()
-    watchID=null;
-   }
- }, [isInternet])
-
+ 
 const getCurrentLocationOne=()=>{
 setloaderT(true)
 Geolocation.getCurrentPosition(
@@ -336,6 +342,8 @@ const UpdateUser=(location,suc)=>{
       let uid=user._id
       const bodyData=false
       const header=authToken;
+
+      
      
       // method, path, body, header
       db.api.apiCall("get",db.link.getCar+uid,bodyData,header)
@@ -411,7 +419,9 @@ const UpdateUser=(location,suc)=>{
       }
 
      useEffect(() => {
-       if(isInternet){
+       if(isInternet  ){
+
+
          if(!getcarDataonce){
            getCar()
            }
@@ -423,11 +433,11 @@ const UpdateUser=(location,suc)=>{
 
        }
  
-     }, [isInternet])
+     }, [isInternet ])
 
   
     useEffect(() => {
-  
+     
       return()=>{
         Geolocation.clearWatch(watchID);
         Geolocation.stopObserving()
@@ -522,6 +532,8 @@ const UpdateUser=(location,suc)=>{
     </Modal>
     )
   }
+
+ 
     
 return(
  <NativeBaseProvider>

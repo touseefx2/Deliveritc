@@ -147,11 +147,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
         );
 
     }
-
-    if(!accept){
-      setrequest(false)
-    }
-
+ 
   }, [accept,mr])
  
  
@@ -163,7 +159,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     }
   }, [mr,cl])
 
-
+ 
   const gotoCurrentLoc=()=>{ 
     mapRef?.current?.animateToCoordinate(cl,1000)
 	}
@@ -281,8 +277,7 @@ const onclickSkip=()=>{
    setp(0);
    setridemodal(false);
    clearallFields() 
- 
-   setTimeout(() => {setskip(false)}, 1000); 
+   setTimeout(() => {setskip(false)}, 1000);
 }
 
 const onLogout=()=>{
@@ -363,7 +358,6 @@ const onClickAccept=()=>{
   }
  
 }
-
  
   const onTextLayout = useCallback(e => {
      setnolpl(e.nativeEvent.lines.length<=5?e.nativeEvent.lines.length:5)
@@ -1615,7 +1609,7 @@ onPress={()=>{onClickAccept()}}>
 {!accept&&<Header setLoader={(c)=>setl(c)}  setActiveChecked={(t)=>setActiveChecked(t)}  propsH={props.propsH} />}
 {!accept &&<SearchBox gotoCurrentLoc={()=>gotoCurrentLoc()}  Search={search} accept={accept} propsH={props.propsH} setSearch={(t)=>setsearch(t)} /> }
 {(!accept && ridemodal==false ) && <Footer   active={activeChecked}/>}
-{(!accept &&  ridemodal==true) && renderRideRequestModal() }
+{(!accept &&  ridemodal==true && request) && renderRideRequestModal() }
 
  <utils.Loader   loader={l} />
  

@@ -51,10 +51,14 @@ PushNotification.configure({
    
      if(title=="New Trip"){
        if(data){
-        store.tripStore.getReqById(data.trip)
+        store.tripStore.getReqById(data.trip,"")
        }
      }
  
+     if(title="Trip has been canceled."){
+      store.tripStore.getReqById(store.tripStore.request._id,"check")
+     }
+
   notification.finish(PushNotificationIOS.FetchResult.NoData);
   // console.log('OK')
   },
@@ -79,8 +83,7 @@ const  hydrateStores= async()=> {
     const hydrate = create({ storage: AsyncStorage });
     await hydrate('userstore', store.userStore);
     await hydrate('tripstore', store.tripStore);
-    await hydrate('carstore', store.carStore);
-   
+    await hydrate('carstore', store.carStore); 
 }
 
 function HeadlessCheck({ isHeadless }) {
@@ -93,7 +96,6 @@ function HeadlessCheck({ isHeadless }) {
 
 function MainApp() {
   hydrateStores();
- 
   return(
             <Provider  {...store}>
                 <App/>
