@@ -1,5 +1,5 @@
 import React ,{useEffect,useRef,useState} from 'react';
-import {Platform,Dimensions,Alert,TouchableOpacity,View,Text,ScrollView,BackHandler} from 'react-native';
+import {Platform, PermissionsAndroid,Dimensions,Alert,TouchableOpacity,View,Text,ScrollView,BackHandler} from 'react-native';
 import utils from "../../../utils/index"
 import { inject, observer } from "mobx-react"; 
 import MapContainer from '../../Map/MapContainer/index';
@@ -35,6 +35,50 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
   let watchID=null;
 
+
+  async function requestPermissions() {
+		if (Platform.OS === 'ios') {
+		  Geolocation.requestAuthorization();
+		  Geolocation.setRNConfiguration({
+			skipPermissionRequests: false,
+		   authorizationLevel: 'whenInUse',
+		 });
+		}
+	  
+		if (Platform.OS === 'android') {
+		  let g= await PermissionsAndroid.request(
+			PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+		  );
+ 
+      if (g === PermissionsAndroid.RESULTS.GRANTED) {
+       setLocation(true);
+       return;
+      }
+		    
+      let msg=""
+		  if (g ==="denied") {
+		  	msg = "Please allow permision to use location"
+		  }
+
+		  if (g === "never_ask_again") {
+			msg= "Please allow permision to use location in setting in device or reinstall app";
+		  }
+      setLocation(false);
+      Alert.alert(
+        "",
+        msg
+        [
+          { text: "OK", onPress: () => locationEnabler()}
+        ]
+      );
+
+
+      return;
+
+		}
+
+
+	  }
  
   useEffect(() => {
     if(refresh){
@@ -153,9 +197,7 @@ setloaderT(false);
  }
 
    useEffect (() => {
-   if(isInternet){
-  subscribeLocation()
-   }else{
+  if(!isInternet){
     Geolocation.clearWatch(watchID);
     Geolocation.stopObserving()
     watchID=null;
@@ -218,7 +260,7 @@ coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
 }
 
 const UpdateUser=(location,suc)=>{
-	//update user
+  	//update user
 	  let uid= user._id
 	  const bodyData= location
 	  const header= authToken;
@@ -256,7 +298,7 @@ const UpdateUser=(location,suc)=>{
 			 }
 	
 			 if(!response.data){
-         utils.ToastAndroid.ToastAndroid_SB(response.message)
+        //  utils.ToastAndroid.ToastAndroid_SB(response.message)
         return;	 
 		  }
  
@@ -264,7 +306,7 @@ const UpdateUser=(location,suc)=>{
 		  return;
 	  }).catch((e) => {
 	   
-            utils.ToastAndroid.ToastAndroid_SB("Server error location not upate in backend")
+           utils.ToastAndroid.ToastAndroid_SB("Server error location not upate in backend")
 		       console.error("Update user location catch error : ", e)
 	        	return;
 	  })
@@ -274,7 +316,8 @@ const UpdateUser=(location,suc)=>{
     useEffect(() => {
 	
       if(isLocation){
-        getCurrentLocationOne()
+        getCurrentLocationOne();
+        subscribeLocation()
       }
     
       if(!isLocation){
@@ -398,7 +441,7 @@ const UpdateUser=(location,suc)=>{
       interval: 10000,
       fastInterval: 5000,
     }).then((data) => { 
-
+      requestPermissions()
       }).catch((err) => {
     console.log("location enabler popup error : ",err)
    
@@ -413,8 +456,7 @@ const UpdateUser=(location,suc)=>{
   useEffect(() => {
  
     if (Platform.OS === 'ios') {
-        //  getCurrentLocation();
-        //  subscribeLocation();
+       
     } else{
       locationEnabler();
     }
