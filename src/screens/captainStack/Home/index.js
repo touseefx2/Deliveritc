@@ -18,11 +18,11 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
  function Home (props)   {
 
-  const socket = io("http://10.7.148.136:3001");
+  const socket = io("http://192.168.10.9:3001");
 
   const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
   const {cars,setCars} =  props.carStore;
-  const {setrequest,accept,request,getReqById,setatime,setaccept} = props.tripStore;
+  const {setrequest,accept,request,getReqById,setatime,setaccept,getreqloader,setgetreqloader} = props.tripStore;
   const {setLocation,isLocation,isInternet} = props.generalStore;
   const [loaderT,setloaderT]=useState(false);
   
@@ -152,13 +152,10 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
         if(request!=false){
             SocketOn()
+           setgetreqloader(true)
            getReqById(request._id,"check");
-
           }
-       
-
-      
-
+    
        }
      }
 
@@ -571,6 +568,7 @@ return(
  <NativeBaseProvider>
 {!loaderT && renderServerError()}
 <utils.Loader location={true} loader={loaderT} />
+<utils.Loader  loader={getreqloader} />
 <MapContainer propsH={props}   /> 
 </NativeBaseProvider>
 )

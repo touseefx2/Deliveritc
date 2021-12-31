@@ -41,7 +41,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   //  ,request,changerequest,trip,settrip   //userstore
   const {cars,setCars} =  props.carStore;
   const { user,setUser,cl ,online,authToken,Logout} = props.userStore;
-  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,captainwt,setcaptainwt} = props.tripStore;
+  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,ct,setct} = props.tripStore;
   const {isInternet,isLocation} = props.generalStore;
 
   let isl=isLocation
@@ -49,7 +49,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   const [mr, setmr] = useState(false);
 
   
-  const [ct, setct] = useState(waitTime);  //current time
+  // const [ct, setct] = useState(waitTime);  //w8 time unti se nechy ktna time rah gya wo
   // const [captainwt, setcaptainwt] = useState(0);  //captain w8 time
 
   // const [cl, setcl] = useState("");  //curent marker locaion 
@@ -104,6 +104,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setatime("");
     settcp("");
     setnolpl(0);
+    setct(waitTime);
     
     // setcash("");
     // setstarCount(0);
@@ -112,9 +113,16 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     // settpd("");
     // settripdetailmodal(false);
     // setcaptainwt(0);
-    // setct(waitTime);
+    // 
   
   }
+
+
+  useEffect(() => {
+   if(!ct){
+     setct(waitTime)
+   }
+  }, [])
 
   useEffect(() => {
     if(request){
@@ -365,7 +373,7 @@ const onClickArrive=()=>{
   
           if(response.success){
             setarrive(true) 
-            setcaptainwt(new Date())
+            // setcaptainwt(new Date())
               return;
               }
 
