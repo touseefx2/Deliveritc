@@ -50,7 +50,7 @@ PushNotification.configure({
    }
    
      if(title=="New Trip"){
-       if(data){
+       if(data && store.tripStore.request==false ){
         store.tripStore.getReqById(data.trip,"")
        }
      }

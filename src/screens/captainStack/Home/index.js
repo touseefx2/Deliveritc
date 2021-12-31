@@ -142,12 +142,10 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
      if(!accept){
        setrequest(false);
        setatime("");
-       if(isInternet){
         SocketOff()
-       }
      }
      
-     if(accept){
+     if(accept && cl!=""){
        if(isInternet){
 
         if(request!=false){
@@ -159,7 +157,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
        }
      }
 
-  }, [accept,isInternet])
+  }, [accept,isInternet,cl])
 
   
   const skipTrip=()=>{

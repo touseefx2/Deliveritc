@@ -17,9 +17,12 @@ constructor(){
  
   @persist('object')  @observable  accept = false;    
   @persist('object')  @observable  atime = "";      //acept trip time
+  @persist('object')  @observable  arvtime = "";      //arrive trip time
+
   // @persist('object')  @observable  captainwt = 0;  
 
-  @persist('object')  @observable  ct = false;   //after arrive cap ka until w8 time se ktna time rah gya tha 
+    @observable  ct = 0;   //after arrive cap ka until w8 time se ktna time rah gya tha 
+    @observable  waitTime = 60;
    
   @persist('object') @observable  arrive = false; 
   @observable  startride = false; 
@@ -49,12 +52,20 @@ constructor(){
     this.atime=obj
    }
 
+   @action setarvtime=(obj)=>{         
+    this.arvtime=obj
+   }
+
   //  @action setcaptainwt=(obj)=>{         
   //   this.captainwt=obj
   //  }
 
+   @action setwaitTime=(obj)=>{         
+    this.waitTime=obj
+   }
+
    @action setct=(obj)=>{         
-    this.ct=obj
+    this.ct =obj
    }
 
    @action setarrive=(obj)=>{          
@@ -132,7 +143,7 @@ constructor(){
            }
   
            if(response.data){
-           
+          
             if(c!=="check"){
               this.setrequest(response.data[0]);
               return;
@@ -144,23 +155,19 @@ constructor(){
                 this.updateUserTS();
                 return;
               }
-
+ 
             
                if(req.status.length>0){
                  req.status.map((e,i,a)=>{
-                   if(e.status=="arrived"){
-                     let at=e.date;
-                     let ct=new Date();
-   
-     let at=moment(atime).format("hh:mm:ss a");
-     let ct=moment(ctt).format("hh:mm:ss a");
-      
-      var arriveTime = moment(at, "HH:mm:ss a");
-      var crntTime = moment(ct, "HH:mm:ss a");
-      var duration = moment.duration(crntTime.diff(arriveTime));
-      var sec = parseInt(duration.asSeconds());
-       this.setct(sec)
+                    if(e.status=="arrived"){
+                       this.setarvtime(e.date)
                    }
+
+                   if(e.status=="accepted"){
+                    this.setatime(e.date)
+                  }
+
+
                  })
                }
               

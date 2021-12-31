@@ -28,8 +28,9 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
    function MapContainer (props)   {
 
     //after arrive captain captain w8 60 sec for user if cancel after 40 secor red time captn earn 90 rs else captain paid 50 rs
-    let waitTime=60     //  sec
-    let cancelTime=40  //   sec  
+    // let waitTime=60        //    60 sec
+    let cancelTime=40     //     sec  
+
 
 
     //before arrive after accept
@@ -41,7 +42,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   //  ,request,changerequest,trip,settrip   //userstore
   const {cars,setCars} =  props.carStore;
   const { user,setUser,cl ,online,authToken,Logout} = props.userStore;
-  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,ct,setct} = props.tripStore;
+  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,ct,setwaitTime,waitTime,arvtime,setarvtime,setct} = props.tripStore;
   const {isInternet,isLocation} = props.generalStore;
 
   let isl=isLocation
@@ -104,7 +105,8 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setatime("");
     settcp("");
     setnolpl(0);
-    setct(waitTime);
+    setwaitTime(waitTime);
+    setarvtime("")
     
     // setcash("");
     // setstarCount(0);
@@ -162,7 +164,27 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     }
  
   }, [accept,mr])
-  
+
+  useEffect(() => {
+     if(arvtime!=""){
+      let at=arriveTime;
+      let ct=new Date();
+
+let at=moment(atime).format("hh:mm:ss a");
+let ct=moment(ctt).format("hh:mm:ss a");
+
+var arriveTime = moment(at, "HH:mm:ss a");
+var crntTime = moment(ct, "HH:mm:ss a");
+var duration = moment.duration(crntTime.diff(arriveTime));
+var sec = parseInt(duration.asSeconds());
+
+if(sec>=waitTime){
+ setwaitTime(0);
+}else{
+ setwaitTime(waitTime-sec);
+}
+     }
+  }, [arvtime])
 
   useEffect(() => {
      if(mr && cl!=""){
@@ -320,13 +342,9 @@ const onClickAccept=()=>{
           if(response.success){
               utils.ToastAndroid.ToastAndroid_SB("Accept") 
               setaccept(true);
-              setTimeout(() => {
               setridemodal(false)
-              }, 1000);
               setatime(new Date()) 
-
-
-
+ 
               return;
               }
 
@@ -372,6 +390,7 @@ const onClickArrive=()=>{
             }
   
           if(response.success){
+            setarvtime(new Date())
             setarrive(true) 
             // setcaptainwt(new Date())
               return;
