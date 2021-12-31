@@ -10,6 +10,7 @@ import Geolocation from 'react-native-geolocation-service';
 import db from "../../../database/index" 
 import Modal from 'react-native-modal';
 import io from "socket.io-client";
+import { acc } from 'react-native-reanimated';
 
 
 export default inject("userStore","generalStore","carStore","tripStore")(observer(Home));
@@ -17,7 +18,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
  function Home (props)   {
 
-  const socket = io("http://10.7.148.47:3001");
+  const socket = io("http://10.7.148.136:3001");
 
   const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
   const {cars,setCars} =  props.carStore;
@@ -27,6 +28,9 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
   
   const [isServerError,setisServerError]=useState("A");
+
+  
+
 	const [refresh,setrefresh]=useState(false);
   const [getcarDataonce,setgetcarDataonce]=useState(false);
   const [getuserOnce,setguserOnce]=useState(false);
@@ -39,9 +43,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   
   let watchID=null;
-
-
-
+ 
   async function requestPermissions() {
 		if (Platform.OS === 'ios') {
 		  Geolocation.requestAuthorization();
@@ -60,7 +62,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
       if (g === PermissionsAndroid.RESULTS.GRANTED || g =="granted") {
        setLocation(true);
        getCurrentLocationOne();
-       subscribeLocation();
+      //  subscribeLocation();
        return;
       }
 		    
@@ -94,6 +96,10 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
       socket.on("connect", () => {
         console.log(`"Socket : I'm connected with the back-end`);
         });
+    }
+
+    const SocketOff=()=>{
+        socket.emit("stop_sharing_location",{socket:socket.id});
     }
 
   useEffect(() => {
@@ -136,14 +142,16 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
      if(!accept){
        setrequest(false);
        setatime("");
- 
+       if(isInternet){
+        SocketOff()
+       }
      }
      
      if(accept){
        if(isInternet){
 
         if(request!=false){
-          SocketOn()
+            SocketOn()
            getReqById(request._id,"check");
 
           }
@@ -194,12 +202,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     watchID= Geolocation.watchPosition((position) => 
    {
 setloaderT(false);
-  const bodyData={
-   location:{
-     type:"Point",
-     coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
-   }
- }
+
   
   const r= 
   {
@@ -209,10 +212,6 @@ setloaderT(false);
   longitudeDelta: LONGITUDE_DELTA,
   }
   setcl(r)
-
-  if(isInternet){
-    UpdateUser(bodyData,false)  
-   }  
  
    },
    (error) => {
@@ -224,13 +223,23 @@ setloaderT(false);
       //  maximumAge: 3000,
       //  timeout:30000,
         enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  ,
-        distanceFilter:15,
+        distanceFilter:0,
      
    }
    )
  
  }
  
+ useEffect(() => {
+   if(cl!="" && isInternet){
+    const bodyData={
+        type:"Point",
+        coordinates: [cl.longitude,cl.latitude]  //long , lat
+    }
+    UpdateUser(bodyData,false,accept)  
+   }
+ }, [cl,accept,isInternet])
+
  const onLogout=()=>{
   setCars(false) 
   Logout();
@@ -245,12 +254,7 @@ async (position) => {
 console.log("cpstn : ",position)
 setloaderT(false);
 
-const bodyData={
-location:{
-type:"Point",
-coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
-}
-} 
+ 
   
   // utils.AlertMessage("","Please connect internet ! ")
   const r= 
@@ -260,11 +264,9 @@ coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
   latitudeDelta:LATITUDE_DELTA,
   longitudeDelta: LONGITUDE_DELTA,
   }
-  setcl(r)
+  setcl(r);
   
-  if(isInternet){
-  UpdateUser(bodyData,false)  
-  }  
+  subscribeLocation()
    
   },
   (error) => {
@@ -291,15 +293,16 @@ coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
  
 }
 
-const UpdateUser=(location,suc)=>{
+const UpdateUser=(location,suc,a)=>{
 
+ 
 
   	//update user
 	  let uid= user._id
 	  const bodyData= location
 	  const header= authToken;
 
-    if(!accept){
+    if(!a){
 	  // method, path, body, header
 	  db.api.apiCall("put",db.link.updateUser+uid,bodyData,header)
 	  .then((response) => {
@@ -316,14 +319,7 @@ const UpdateUser=(location,suc)=>{
 			 if(response.data){
 			     
 			  	 setUser(response.data);
-            const r= 
-            {
-            latitude:  response.data.location.coordinates[1] ,
-            longitude: response.data.location.coordinates[0]    ,
-            latitudeDelta:LATITUDE_DELTA,
-            longitudeDelta: LONGITUDE_DELTA,
-            }
-           setcl(r)
+         
 			  
 			if(suc){
 					subscribeLocation()
@@ -346,12 +342,13 @@ const UpdateUser=(location,suc)=>{
 	        	return;
 	  })
     }else{
-      socket.emit("send_location", {
+
+       socket.emit("receive_location_from_captain", {
         // longitude: longitude,
         // latitude: latitude,
         id: socket.id,
         user_id: uid,
-        bodyData
+        location:bodyData
       });
     }
 
@@ -568,9 +565,8 @@ const UpdateUser=(location,suc)=>{
     </Modal>
     )
   }
-
- 
-    
+  
+   
 return(
  <NativeBaseProvider>
 {!loaderT && renderServerError()}

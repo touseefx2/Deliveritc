@@ -16,10 +16,15 @@ constructor(){
  
   @persist('object')  @observable  accept = false;    
   @persist('object')  @observable  atime = "";      //acept trip time
+  @persist('object')  @observable  captainwt = 0;  
+   
+  @persist('object') @observable  arrive = false; 
+  @observable  startride = false; 
+  @observable  endride = false; 
   
   
 
-  @action changerequest=(obj)=>{         //set trip
+  @action changerequest=(obj)=>{          
      this.request=obj 
    }
  
@@ -27,13 +32,31 @@ constructor(){
     this.request=obj 
    }
 
-   @action setaccept=(obj)=>{         //set trip
+   @action setaccept=(obj)=>{         
     this.accept=obj
    }
 
-   @action setatime=(obj)=>{         //set trip
+   @action setatime=(obj)=>{         
     this.atime=obj
    }
+
+   @action setcaptainwt=(obj)=>{         
+    this.captainwt=obj
+   }
+
+
+   @action setarrive=(obj)=>{          
+    this.arrive =obj
+   }
+
+   @action setstartride=(obj)=>{          
+    this.startride=obj
+   }
+ 
+   @action setendride=(obj)=>{       
+    this.endride =obj
+   }
+
 
    @action updateUserTS=()=>{
   	//update user
