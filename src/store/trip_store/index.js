@@ -21,8 +21,9 @@ constructor(){
 
   // @persist('object')  @observable  captainwt = 0;  
 
-    @observable  ct = 0;   //after arrive cap ka until w8 time se ktna time rah gya tha 
+   
     @observable  waitTime = 60;
+    @observable  ct = this.waitTime;   //after arrive cap ka until w8 time se ktna time rah gya tha 
    
   @persist('object') @observable  arrive = false; 
   @observable  startride = false; 

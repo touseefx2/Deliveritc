@@ -102,6 +102,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setstartride(false);
     setendride(false);
     setp(0);
+    setct(waitTime)
     setatime("");
     settcp("");
     setnolpl(0);
@@ -119,19 +120,14 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
   }
 
-
-  useEffect(() => {
-   if(!ct){
-     setct(waitTime)
-   }
-  }, [])
-
+ 
   useEffect(() => {
     if(request){
       setridemodal(true)
      } 
      if(!request){
-       setp(0)
+       setp(0);
+       setwaitTime(waitTime)
      }
     }, [request])
    
@@ -192,6 +188,14 @@ if(sec>=waitTime){
        setmr(false)
     }
   }, [mr,cl])
+
+  useEffect(() => {
+   if(arrive){
+   ctcfba=90
+    }else{
+    ctcfba=40    
+   }
+  }, [arrive])
 
  
   const gotoCurrentLoc=()=>{ 
@@ -488,8 +492,20 @@ return dot;
       var sec = parseInt(duration.asSeconds());
       let cf= sec<=ctnotcuttimeba ? 0 : ctcfba;
      
+      if(accept&&!arrive){
+        onClickcancelTrip("Emergency (Canceling before arrive)",sec,cf);
+        return;
+      }
+
+      if(arrive && !startride){
+        onClickcancelTrip("Emergency (Canceling after arrive)",sec,cf);
+        return;
+      }
      
-       onClickcancelTrip("Emergency (Canceling before arrive)",sec,cf)
+      if(startride){
+        onClickcancelTrip("Emergency (Canceling after startride)",sec,cf);
+        return;
+      }
 
     }else{
       utils.AlertMessage("","Please connect internet !")
