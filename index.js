@@ -56,7 +56,10 @@ PushNotification.configure({
      }
  
      if(title="Trip has been canceled."){
-      store.tripStore.getReqById(store.tripStore.request._id,"check")
+       if(store.tripStore.request!=false){
+         store.tripStore.getReqById(store.tripStore.request._id,"check")
+       }
+      
      }
 
   notification.finish(PushNotificationIOS.FetchResult.NoData);

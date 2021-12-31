@@ -116,6 +116,9 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     if(request){
       setridemodal(true)
      } 
+     if(!request){
+       setp(0)
+     }
     }, [request])
    
   useEffect(() => {
@@ -128,18 +131,18 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
       }
     
       let mark2={
-       latitude: request.pickup.location.latitude,
-       longitude:request.pickup.location.longitude ,
+      latitude: request.pickup.location.latitude,
+      longitude:request.pickup.location.longitude ,
       }
     
-      mapRef?.current?.fitToCoordinates([mark1,mark2], 
+       mapRef?.current?.fitToCoordinates([mark1,mark2], 
           {  
           animated: true,
           edgePadding: 
-          {top: 150,
-          right:120,
-          bottom: 150,
-          left: 120}
+          {top: 300,
+          right:100,
+          bottom:300,
+          left: 100}
             }
         
         );
@@ -310,27 +313,7 @@ const onClickAccept=()=>{
               }, 1000);
               setatime(new Date()) 
 
-              let mark1={
-                latitude:  cl.latitude,
-                longitude: cl.longitude,
-              }
-            
-              let mark2={
-              latitude: request.pickup.location.latitude,
-              longitude:request.pickup.location.longitude ,
-              }
-            
-              mapRef?.current?.fitToCoordinates([mark1,mark2], 
-                  {  
-                  animated: true,
-                  edgePadding: 
-                  {top: 50,
-                  right:80,
-                  bottom: 50,
-                  left: 80}
-                    }
-                
-                );
+
 
               return;
               }

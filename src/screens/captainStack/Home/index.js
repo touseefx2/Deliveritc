@@ -55,9 +55,12 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 		  let g= await PermissionsAndroid.request(
 			PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
 		  );
- 
-      if (g === PermissionsAndroid.RESULTS.GRANTED) {
+
+       
+      if (g === PermissionsAndroid.RESULTS.GRANTED || g =="granted") {
        setLocation(true);
+       getCurrentLocationOne();
+       subscribeLocation();
        return;
       }
 		    
@@ -69,12 +72,14 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 		  if (g === "never_ask_again") {
         msg= "Please allow permision to use location in setting in device or reinstall app and allow permission to continue";
 		  }
+     
       setLocation(false);
+
       Alert.alert(
         '',
         msg,
         [
-        {text: 'OK', onPress: () => locationEnabler()},
+        {text: 'OK', onPress: () => {  locationEnabler()}},
         ], 
         { cancelable: false }
         )
@@ -85,6 +90,12 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
 	  }
  
+    const SocketOn=()=>{
+      socket.on("connect", () => {
+        console.log(`"Socket : I'm connected with the back-end`);
+        });
+    }
+
   useEffect(() => {
     if(refresh){
       if(isInternet){
@@ -130,11 +141,15 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
      
      if(accept){
        if(isInternet){
-        getReqById(request._id,"check");
 
-        socket.on("connect", () => {
-         console.log(`"Socket : I'm connected with the back-end`);
-        });
+        if(request!=false){
+          SocketOn()
+           getReqById(request._id,"check");
+
+          }
+       
+
+      
 
        }
      }
@@ -211,7 +226,6 @@ setloaderT(false);
         enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  ,
         distanceFilter:15,
      
-  
    }
    )
  
@@ -271,7 +285,7 @@ coordinates: [position.coords.longitude,position.coords.latitude]  //long , lat
       // timeout: 30000,
       // maximumAge:3000
      
-       enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  
+       enableHighAccuracy: true, timeout: 20000, maximumAge: 10000  
   },
   );
  
@@ -345,20 +359,18 @@ const UpdateUser=(location,suc)=>{
 		}
 
     useEffect(() => {
-	
-      if(isLocation){
-        getCurrentLocationOne();
-        subscribeLocation()
-      }
-    
+      locationEnabler();
+    }, [])
+   
+    useEffect(() => {
+
+      
       if(!isLocation){
         Geolocation.clearWatch(watchID);
         Geolocation.stopObserving()
         watchID=null;
-        locationEnabler()
       }
-    
-     
+  
     }, [isLocation])
     
     const getCar=()=>{
@@ -377,7 +389,7 @@ const UpdateUser=(location,suc)=>{
              setisServerError(false)
              console.log("Get car response : " , response);
         
-             if(response.msg=="Invalid Token"){
+             if(response.msg=="Session expire"){
                utils.AlertMessage("",response.msg) ;
                onLogout()
               return;
