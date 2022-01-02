@@ -40,7 +40,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   //  ,request,changerequest,trip,settrip   //userstore
   const {cars,setCars} =  props.carStore;
   const { user,setUser,cl ,online,authToken,Logout} = props.userStore;
-  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal } = props.tripStore;
+  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal,tcp,dpd,tpd,settcp,setdpd,settpd } = props.tripStore;
   const {isInternet,isLocation} = props.generalStore;
 
   let isl=isLocation
@@ -79,11 +79,10 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   // const [ridemodal,setridemodal] = useState(false);
   const [p,setp] = useState(0); //progress //0 to 10 sec after 10 sec skip/rjct click
 
-  const [dcp,setdcp] = useState("..."); // distance from current loc to pickup location  reqst modal
-  const [tcp,settcp] = useState("..."); // time from current loc to pickup location      reqesr modal
-
-  const [dpd,setdpd] = useState("..."); // distance from    pickup location to dropofloce  startride true
-  const [tpd,settpd] = useState("..."); // time from  pickup location to dropofloce  startride true
+  // const [dcp,setdcp] = useState("..."); // distance from current loc to pickup location  reqst modal
+  // const [tcp,settcp] = useState("..."); // time from current loc to pickup location      reqesr modal
+  // const [dpd,setdpd] = useState("..."); // distance from    pickup location to dropofloce  startride true
+  // const [tpd,settpd] = useState("..."); // time from  pickup location to dropofloce  startride true
  
   const [nolpl,setnolpl] = useState(0); //numofline in pickup location in trip modal
 
@@ -105,7 +104,9 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setp(0);
     setct(wt)
     setatime("");
-    settcp("");
+    settcp("...");
+    settpd("...");
+    setdpd("...");
     setnolpl(0);
     setwaitTime("f");
     setarvtime("");
@@ -113,8 +114,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     
     // setcash("");
     // setstarCount(0);
-    // setdcp("");
-    // setdpd("");
+
     // settpd("");
     // settripdetailmodal(false);
     // setcaptainwt(0);
@@ -124,13 +124,10 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
  
   useEffect(() => {
     if(request){
-      setp(0)
+ 
       setridemodal(true)
      } 
      if(!request){
-       setp(0);
-       setwaitTime("f");
-       setar(0);
        clearallFields()
      }
     }, [request])
@@ -274,7 +271,7 @@ if(sec>=wt){
  
 useEffect(() => {
  
-  if(ridemodal  || accept){
+  if(ridemodal){
 
   const interval = setInterval(() => {
       setp(p+0.1)
@@ -313,28 +310,17 @@ useEffect(() => {
               var distanceString = res.rows[0].elements[0].distance.text;
               var timeString = res.rows[0].elements[0].duration.text;
               var timeSecond = res.rows[0].elements[0].duration.value;
-            // console.log("distanceString : ",res.rows[0].elements[0])
+              let s=timeSecond
+              var travelTime = moment(new Date()).add(s, 'seconds').format('hh:mm A')
+
             if(c=="requestride"){
               // setdcp(distanceString)
               settcp(timeString)
             }else if(c=="startride"){
+            
               setdpd(distanceString)
-              let s=timeSecond
-              var travelTime = moment(new Date()).add(s, 'seconds').format('hh:mm A')
               settpd(travelTime)
-              
- 
-              if(trip.length>0){
-                trip.map((e,i,a)=>{
-                if(e.id==request.id){
-                  trip[i].total_distance=distanceString
-                  trip[i].total_time=s
-                  }
-                })
-              }
-
-              changerequest("TotalDistancendTime","","","","",distanceString,s)
-
+   
                     }
 
             
@@ -448,6 +434,61 @@ const onClickArrive=()=>{
          setl(false);
       //  utils.AlertMessage("","Network request failed");
        console.error("Arrive trip catch error : ", e)
+      return;
+    })
+    
+
+  }else{
+    utils.AlertMessage("","Please connect internet")
+  }
+ 
+}
+
+const onClickStart=()=>{
+
+  let at=moment(arvtime).format("hh:mm:ss a");
+  let ct=moment(new Date()).format("hh:mm:ss a");
+  
+   
+  var arriveTime = moment(at, "HH:mm:ss a");
+  var crntTime = moment(ct, "HH:mm:ss a");
+  var duration = moment.duration(crntTime.diff(arriveTime));
+  var sec = parseInt(duration.asSeconds()); //arived to start w8 time
+
+  if(isInternet){ 
+    setl(true);  
+
+    const bodyData={"waiting_time":sec}
+    const header=authToken;
+    // method, path, body, header
+    db.api.apiCall("put",db.link.startTrip+request._id,bodyData,header)
+    .then((response) => {
+          
+           console.log("Start trip response : " , response);
+           setl(false);
+
+          if(response.msg=="Invalid Token"){
+            utils.AlertMessage("", response.msg ) ;
+            onLogout();
+            return;
+            }
+  
+          if(response.success){
+            setstartride(true);
+              return;
+              }
+
+           if(!response.success){
+                utils.AlertMessage("",response.message)
+               return;
+               }
+   
+
+        return;
+    }).catch((e) => {
+         setl(false);
+      //  utils.AlertMessage("","Network request failed");
+       console.error("Start trip catch error : ", e)
       return;
     })
     
@@ -718,56 +759,26 @@ return dot;
 
   const clickStartRide=()=>{
 
-    // Alert.alert(
-    //   "Confirmation",
-    //   "Are you sure you want Start ride to reach customer droppoff location ?",
-    //   [
-    //     {
-    //       text: "No",
-    //       onPress: () => console.log("Cancel Pressed"),
-    //       style: "cancel"
-    //     },
-    //     { text: "Yes", onPress: () =>  {
+    Alert.alert(
+      "Confirmation",
+      "Are you sure you want Start ride to reach customer droppoff location ?",
+      [
+        {
+          text: "No",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel"
+        },
+        { text: "Yes", onPress: () =>  {
 
-    //       if(isl==true){
-    //       setl(true);
-
-    //       var at = moment(captainwt, "hh:mm:ss a"); //arive for pickup start time
-    //       var crntTime = moment(new Date(), "hh:mm:ss a");
-       
-    //       var duration = moment.duration(crntTime.diff(at));
-       
-    //       var sec = parseInt(duration.asSeconds());  //arived to start w8 time
-      
-    //     // console.log("w8 time :",sec)
-
-    //       setTimeout(() => {
-    //         if(trip.length>0){
-    //           trip.map((e,i,a)=>{
-    //           if(e.id==request.id){
-    //             trip[i].startride=true
-    //             trip[i].wait_time=sec
-    //             trip[i].startRideTime=new Date()
-    //             }
-    //           })
-    //         }
-
-    //         changerequest("startRide","","","",sec)
-
-    //        setstartride(true) 
-    //         setl(false);
-    //         setct(waitTime);
-    //         setcaptainwt(0);
-    //       }, 1500);
-         
-    //       //  getCurrentLocation("ridestart")
-    //       }else if(isl==false){
-    //         utils.AlertMessage("","Please turn on location !")
-    //       }
+          if(isl==true){
+            onClickStart();
+           }else if(isl==false){
+             utils.AlertMessage("","Please turn on location !")
+           }
             
-    //     } }
-    //   ]
-    // );
+        } }
+      ]
+    );
 
    
   }
@@ -994,84 +1005,82 @@ CANCEL JOB
 
 
 // when start ride
-//      if(arrive && startride && accept && !endride){
-//       const str=request.dropoffLocation.name
-//       const title=str.substr(0, str.indexOf(',')); 
-//       const title2= str.substr(str.indexOf(",") + 1)
+     if(arrive && startride && accept && !endride){
+      
+      const title=request.dropoff.name
+      const title2= request.dropoff.address
 
-//       console.log("pl1 : ",request.pickupLocation.name)
-//       console.log("pl2 : ",request.dropoffLocation.name)
-
-//       fetchDistanceBetweenPointsOnline(
-//          cl.latitude,
-//          cl.longitude,
-//         request.dropoffLocation.region.latitude,
-//         request.dropoffLocation.region.longitude,
-//         "startride")
+    
+      fetchDistanceBetweenPointsOnline(
+         cl.latitude,
+         cl.longitude,
+        request.dropoff.location.latitude,
+        request.dropoff.location.longitude,
+        "startride")
  
-//       return(
+      return(
 
-//         <View style={{position:"absolute",top:0,left:10,right:10}}> 
+        <View style={{position:"absolute",top:0,left:10,right:10}}> 
 
 
-// <View style={{width:wp("80%"),height:80,borderRadius:10,padding:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center"}}>
+<View style={{width:wp("80%"),height:80,borderRadius:10,padding:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center"}}>
  
-//      <View style={{width:"79.5%",height:"100%",padding:5,marginTop:20}}>
-//     <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:17,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20}}> 
-//     {title}
-//    </theme.Text>  
-//    <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:14,color:"gray",lineHeight:20}}> 
-//     {title2}
-//    </theme.Text> 
-//      </View>
+     <View style={{width:"79.5%",height:"100%",padding:5,marginTop:20}}>
+    <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:17,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20}}> 
+    {title}
+   </theme.Text>  
+   <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:14,color:"gray",lineHeight:20}}> 
+    {title2}
+   </theme.Text> 
+     </View>
 
-//      <View style={{backgroundColor:"silver",width:"0.5%",height:"100%",opacity:0.4}} />
-
-
-//     <TouchableOpacity  onPress={()=>{navigatetoGoogleMaps("dropoff")}}  style={{width:"20%",height:"100%",padding:5,alignItems:"center",justifyContent:"center"}} >
-
-//     <Image  source={require("../../../assets/Navigate/navigate.png")} style={{width:35,height:35,opacity:0.8}} />
-
-//    <theme.Text  style={{fontSize:14,color:theme.color.buttonLinerGC1,fontFamily:theme.fonts.fontMedium}}> 
-//     START
-//    </theme.Text>
-
-//    </TouchableOpacity>
+     <View style={{backgroundColor:"silver",width:"0.5%",height:"100%",opacity:0.4}} />
 
 
-//         </View>
+    <TouchableOpacity  onPress={()=>{navigatetoGoogleMaps("dropoff")}}  style={{width:"20%",height:"100%",padding:5,alignItems:"center",justifyContent:"center"}} >
+
+    <Image  source={require("../../../assets/Navigate/navigate.png")} style={{width:35,height:35,opacity:0.8}} />
+
+   <theme.Text  style={{fontSize:14,color:theme.color.buttonLinerGC1,fontFamily:theme.fonts.fontMedium}}> 
+    START
+   </theme.Text>
+
+   </TouchableOpacity>
 
 
-//    <View style={{width:wp("95%"),borderRadius:10,paddingVertical:2,paddingHorizontal:5,marginTop:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
+        </View>
 
-//    <View style={{alignItems:"center",justifyContent:"center",width:"49.5%"  }}>
-//    <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-//     Travel Time
-//    </theme.Text>
-//    <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-//     {tpd}
-//    </theme.Text>
-//    </View>
 
-// <View style={{backgroundColor:"silver",width:"0.5%",height:"50%"}} />
+   <View style={{width:wp("95%"),borderRadius:10,paddingVertical:2,paddingHorizontal:5,marginTop:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
 
-//    <View style={{alignItems:"center",justifyContent:"center",width:"50%"  }}>
-//    <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-//     Total distance
-//    </theme.Text>
-//    <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-//    {dpd}
-//    </theme.Text>
-//    </View>
+   <View style={{alignItems:"center",justifyContent:"center",width:"49.5%"  }}>
+   <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+    Travel Time
+   </theme.Text>
+   <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+    {tpd}
+   </theme.Text>
+   </View>
 
-//     </View>
+<View style={{backgroundColor:"silver",width:"0.5%",height:"50%"}} />
+
+   <View style={{alignItems:"center",justifyContent:"center",width:"50%"  }}>
+   <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+    Total distance
+   </theme.Text>
+   <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+   {dpd}
+   </theme.Text>
+   </View>
+
+    </View>
 
   
-//         </View>
+        </View>
 
 
-//       )
-//      }
+      )
+     }
 
 
 }

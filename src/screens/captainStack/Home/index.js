@@ -28,8 +28,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
   
   const [isServerError,setisServerError]=useState("A");
-
-  
+ 
 
 	const [refresh,setrefresh]=useState(false);
   const [getcarDataonce,setgetcarDataonce]=useState(false);
@@ -148,8 +147,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   }, [accept])
 
   useEffect(() => {
-   
-     
+    
      if(accept && cl!=""){
        if(isInternet  && !gro){
 
@@ -304,7 +302,7 @@ const UpdateUser=(location,suc,a)=>{
 	  const bodyData= location
 	  const header= authToken;
  
-    if(!a){
+    // if(!a){
 	  // method, path, body, header
 	  db.api.apiCall("put",db.link.updateUser+uid,bodyData,header)
 	  .then((response) => {
@@ -343,16 +341,16 @@ const UpdateUser=(location,suc,a)=>{
 		       console.error("Update user location catch error : ", e)
 	        	return;
 	  })
-    }else{
+    // }else{
 
-       socket.emit("receive_location_from_captain", {
-        // longitude: longitude,
-        // latitude: latitude,
-        id: socket.id,
-        user_id: uid,
-        location:bodyData
-      });
-    }
+    //    socket.emit("receive_location_from_captain", {
+    //     // longitude: longitude,
+    //     // latitude: latitude,
+    //     id: socket.id,
+    //     user_id: uid,
+    //     location:bodyData
+    //   });
+    // }
 
 	
 		}

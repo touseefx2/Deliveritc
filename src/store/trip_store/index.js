@@ -18,17 +18,23 @@ constructor(){
  
   @persist('object')  @observable  accept = false;    
   @persist('object')  @observable  atime = "";      //acept trip time
-    @observable  arvtime = "";      //arrive trip time
+  @persist('object')   @observable  arvtime = "";      //arrive trip time
 
-  // @persist('object')  @observable  captainwt = 0;  
+  @persist('object')   @observable  tcp = "...";  
+  @persist('object')   @observable  dpd = "...";  
+  @persist('object')   @observable  tpd = "...";  
+ 
+  // const [tcp,settcp] = useState("..."); // time from current loc to pickup location      reqesr modal
+  // const [dpd,setdpd] = useState("..."); // distance from    pickup location to dropofloce  startride true
+  // const [tpd,settpd] = useState("..."); // time from  pickup location to dropofloce  startride true
 
    
-     @observable  ridemodal = false;
+    @observable  ridemodal = false;
 
     @observable  waitTime = "f";
    
   @persist('object') @observable  arrive = false; 
-  @observable  startride = false; 
+  @persist('object')  @observable  startride = false; 
   @observable  endride = false; 
   
   @persist('object') @observable  ar = 0;   //req user avg rating
@@ -40,6 +46,19 @@ constructor(){
   @action setgro=(obj)=>{         //set trip
     this.gro=obj
    }
+
+   @action settcp=(obj)=>{         //set trip
+    this.tcp=obj
+   }
+
+   @action setdpd=(obj)=>{         //set trip
+    this.dpd=obj
+   }
+
+   @action settpd=(obj)=>{         //set trip
+    this.tpd=obj
+   }
+
 
    @action setridemodal=(obj)=>{         //set trip
     this.ridemodal=obj
@@ -218,6 +237,7 @@ constructor(){
 
                if(req.status.length>0){
                  req.status.map((e,i,a)=>{
+
                     if(e.status=="arrived"){
                        this.setarvtime(e.date)
                    }
@@ -225,7 +245,6 @@ constructor(){
                    if(e.status=="accepted"){
                     this.setatime(e.date)
                   }
-
 
                  })
                }
