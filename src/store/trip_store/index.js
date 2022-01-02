@@ -5,6 +5,7 @@ import utils from "../../utils";
 import userStore from "../index";  
 import carstore from "../index";
 import moment from "moment"
+import userstore from "../user_store";
 
 export default  class  tripstore {
 
@@ -17,25 +18,42 @@ constructor(){
  
   @persist('object')  @observable  accept = false;    
   @persist('object')  @observable  atime = "";      //acept trip time
-  @persist('object')  @observable  arvtime = "";      //arrive trip time
+    @observable  arvtime = "";      //arrive trip time
 
   // @persist('object')  @observable  captainwt = 0;  
 
    
-    @observable  waitTime = 60;
-    @observable  ct = this.waitTime;   //after arrive cap ka until w8 time se ktna time rah gya tha 
+     @observable  ridemodal = false;
+
+    @observable  waitTime = "f";
    
   @persist('object') @observable  arrive = false; 
   @observable  startride = false; 
   @observable  endride = false; 
   
+  @persist('object') @observable  ar = 0;   //req user avg rating
+
   @observable  getreqloader= false; 
+
+  @observable  gro= false; 
+
+  @action setgro=(obj)=>{         //set trip
+    this.gro=obj
+   }
+
+   @action setridemodal=(obj)=>{         //set trip
+    this.ridemodal=obj
+   }
 
 
   @action setgetreqloader=(obj)=>{          
     this.getreqloader=obj 
   }
 
+  @action.bound
+  setar(val) {
+   this.ar = val;
+}
 
   @action changerequest=(obj)=>{          
      this.request=obj 
@@ -65,10 +83,7 @@ constructor(){
     this.waitTime=obj
    }
 
-   @action setct=(obj)=>{         
-    this.ct =obj
-   }
-
+   
    @action setarrive=(obj)=>{          
     this.arrive =obj
    }
@@ -104,6 +119,8 @@ constructor(){
          if(response.success){
           this.setaccept(false);
           this.setatime("");
+          this.setar(0);
+          this.setarrive(false)
           this.setrequest(false);
           utils.ToastAndroid.ToastAndroid_SBC("Customer cancel this trip !")
          }
@@ -119,6 +136,40 @@ constructor(){
 	
 		}
 
+    @action getAvgRate=(id)=>{         //get new trip by id
+      const bodyData=false
+      const header= userStore.userStore.authToken;
+     
+      // method, path, body, header
+      db.api.apiCall("get",db.link.getAvgRating+id,bodyData,header)
+      .then((response) => {
+        
+             console.log("Get avg rating res : " , response);
+        
+             if(response.msg=="Invalid Token"){
+              utils.AlertMessage("",response.msg) ;
+              onLogout()
+              return;
+             }
+
+             if(!response.data){
+              // utils.AlertMessage("",response.message) ;
+              return;
+             }
+    
+             if(response.data){
+           this.setar(response.data.ratingAvg)
+             }
+          
+             return;
+     
+      }).catch((e) => {
+        // utilsS.AlertMessage("","Network request failed");
+         console.error("Get avg rating catch error : ", e)
+         return;
+      })
+     }
+
    @action getReqById=(tid,c)=>{         //get new trip by id
     const bodyData=false
     const header=userStore.userStore.authToken;
@@ -128,7 +179,7 @@ constructor(){
     .then((response) => {
            
       this.setgetreqloader(false);
-
+       this.setgro(true);
            console.log("Get req by id response : " , response);
       
            if(response.msg=="Invalid Token"){
@@ -145,8 +196,13 @@ constructor(){
   
            if(response.data){
           
+           
+
             if(c!=="check"){
-              this.setrequest(response.data[0]);
+
+              let res=response.data[0]
+              this.getAvgRate(res.customer._id)
+              this.setrequest(res);
               return;
              }else{
 
@@ -156,8 +212,10 @@ constructor(){
                 this.updateUserTS();
                 return;
               }
- 
-            
+    
+              this.getAvgRate(req.customer._id)
+              this.setrequest(req);
+
                if(req.status.length>0){
                  req.status.map((e,i,a)=>{
                     if(e.status=="arrived"){
@@ -172,7 +230,8 @@ constructor(){
                  })
                }
               
-               this.setrequest(req);
+               
+
                return;
 
              }
@@ -183,6 +242,7 @@ constructor(){
    
     }).catch((e) => {
       this.setgetreqloader(false);
+      this.setgro(false);
       // utilsS.AlertMessage("","Network request failed");
        console.error("Get req by id catch error : ", e)
        return;

@@ -22,7 +22,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
   const {cars,setCars} =  props.carStore;
-  const {setrequest,accept,request,getReqById,setatime,setaccept,getreqloader,setgetreqloader} = props.tripStore;
+  const {setrequest,accept,request,getReqById,setatime,setaccept,getreqloader,setgetreqloader,gro,setgro} = props.tripStore;
   const {setLocation,isLocation,isInternet} = props.generalStore;
   const [loaderT,setloaderT]=useState(false);
   
@@ -131,7 +131,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
  
 
   useEffect(() => {
-    if(isInternet){
+    if(isInternet ){
       if(!request){
        skipTrip()
       }
@@ -139,17 +139,22 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   }, [request,isInternet])
 
   useEffect(() => {
-     if(!accept){
-       setrequest(false);
-       setatime("");
-        SocketOff()
-     }
+    if(!accept){
+      setrequest(false);
+      setatime("");
+      setgro(false)
+       SocketOff()
+    }
+  }, [accept])
+
+  useEffect(() => {
+   
      
      if(accept && cl!=""){
-       if(isInternet){
+       if(isInternet  && !gro){
 
         if(request!=false){
-            SocketOn()
+           SocketOn()
            setgetreqloader(true)
            getReqById(request._id,"check");
           }
@@ -157,7 +162,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
        }
      }
 
-  }, [accept,isInternet,cl])
+  }, [accept,isInternet,cl,request])
 
   
   const skipTrip=()=>{
@@ -218,7 +223,7 @@ setloaderT(false);
       //  maximumAge: 3000,
       //  timeout:30000,
         enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  ,
-        distanceFilter:0,
+        distanceFilter:15,
      
    }
    )
@@ -226,12 +231,15 @@ setloaderT(false);
  }
  
  useEffect(() => {
-   if(cl!="" && isInternet){
+   if(cl!="" && isInternet ){
+     
     const bodyData={
+      location:{
         type:"Point",
         coordinates: [cl.longitude,cl.latitude]  //long , lat
+      }
     }
-    UpdateUser(bodyData,false,accept)  
+UpdateUser(bodyData,false,accept)  
    }
  }, [cl,accept,isInternet])
 
@@ -290,13 +298,12 @@ setloaderT(false);
 
 const UpdateUser=(location,suc,a)=>{
 
- 
-
+  
   	//update user
 	  let uid= user._id
 	  const bodyData= location
 	  const header= authToken;
-
+ 
     if(!a){
 	  // method, path, body, header
 	  db.api.apiCall("put",db.link.updateUser+uid,bodyData,header)
@@ -305,7 +312,7 @@ const UpdateUser=(location,suc,a)=>{
 		  	 console.log("Update user location response : " , response.data.location);
         
 			 
-         if(response.msg=="Invalid Token"){
+         if(response.msg=="Session expire"){
           utils.AlertMessage("",response.msg) ;
           onLogout()
           return;

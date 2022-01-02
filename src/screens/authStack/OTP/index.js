@@ -134,7 +134,7 @@ export default inject("userStore","generalStore")(observer(Otp));
 	}
 
 	useEffect(() => {
-	//   signInWithPhoneNumber(mobile);
+//  signInWithPhoneNumber(mobile);
  
 	// 	const Subscribe =  auth().onAuthStateChanged( async (user)=> {
 	// 		if (user)  {

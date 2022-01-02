@@ -18,6 +18,7 @@ import StarRating from 'react-native-star-rating';
 import {Input } from '@ui-kitten/components';
 import { tr } from 'date-fns/locale';
 import db from "../../../database/index"
+import { acc } from 'react-native-reanimated';
 
 
 const gapikey="AIzaSyAJeMjKbTTRvoZJe0YoJc48VhaqbtoTmug"
@@ -27,30 +28,30 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
    function MapContainer (props)   {
 
-    //after arrive captain captain w8 60 sec for user if cancel after 40 secor red time captn earn 90 rs else captain paid 50 rs
-    // let waitTime=60        //    60 sec
-    let cancelTime=40     //     sec  
-
+  
 
 
     //before arrive after accept
     let ctnotcuttimeba=10  //2min or 120 sec no cut charges if captain cancel trip before 2 min so not cut charges otherwise cut charges
-    let ctcfba=40
+    let ctcfba=40 //amount paid before arrive after then 2 min in after acpt
+    let ctcfaa=90 //amount paid  +  after arrive and cancel after grace time or amound paid - before gracetime
 
-
-   
+ 
   //  ,request,changerequest,trip,settrip   //userstore
   const {cars,setCars} =  props.carStore;
   const { user,setUser,cl ,online,authToken,Logout} = props.userStore;
-  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,ct,setwaitTime,waitTime,arvtime,setarvtime,setct} = props.tripStore;
+  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal } = props.tripStore;
   const {isInternet,isLocation} = props.generalStore;
 
   let isl=isLocation
 
   const [mr, setmr] = useState(false);
 
-  
-  // const [ct, setct] = useState(waitTime);  //w8 time unti se nechy ktna time rah gya wo
+    //after arrive captain captain w8 60 sec for user if cancel after 40 secor red time captn earn 90 rs else captain paid 50 rs
+    let wt=60        //    60 sec
+    let cancelTime=40     //     sec  
+    const [ct, setct] = useState(wt);  //w8 time unti se nechy ktna time rah gya wo
+
   // const [captainwt, setcaptainwt] = useState(0);  //captain w8 time
 
   // const [cl, setcl] = useState("");  //curent marker locaion 
@@ -75,7 +76,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   // const [startride,setstartride] = useState(false);
   // const [endride,setendride] = useState(false);
 
-  const [ridemodal,setridemodal] = useState(false);
+  // const [ridemodal,setridemodal] = useState(false);
   const [p,setp] = useState(0); //progress //0 to 10 sec after 10 sec skip/rjct click
 
   const [dcp,setdcp] = useState("..."); // distance from current loc to pickup location  reqst modal
@@ -102,12 +103,13 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setstartride(false);
     setendride(false);
     setp(0);
-    setct(waitTime)
+    setct(wt)
     setatime("");
     settcp("");
     setnolpl(0);
-    setwaitTime(waitTime);
-    setarvtime("")
+    setwaitTime("f");
+    setarvtime("");
+    setar(0)
     
     // setcash("");
     // setstarCount(0);
@@ -119,21 +121,33 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     // 
   
   }
-
  
   useEffect(() => {
     if(request){
+      setp(0)
       setridemodal(true)
      } 
      if(!request){
        setp(0);
-       setwaitTime(waitTime)
+       setwaitTime("f");
+       setar(0);
+       clearallFields()
      }
     }, [request])
+
+    useEffect(() => {
+     if(!accept)
+     {
+      setp(0);
+      setwaitTime("f");
+      setar(0);
+      clearallFields()
+     }
+    }, [accept])
    
   useEffect(() => {
 
-    if(accept && !mr){
+    if(accept && !mr && !arrive){
 
       let mark1={
         latitude:  cl.latitude,
@@ -158,27 +172,57 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
         );
 
     }
+
+    if(accept && !mr && arrive){
+
+      let mark1={
+        latitude:  cl.latitude,
+        longitude: cl.longitude,
+      }
+    
+      let mark2={
+      latitude: request.dropoff.location.latitude,
+      longitude:request.dropoff.location.longitude ,
+      }
+    
+       mapRef?.current?.fitToCoordinates([mark1,mark2], 
+          {  
+          animated: true,
+          edgePadding: 
+          {top: 300,
+          right:100,
+          bottom:300,
+          left: 100}
+            }
+        
+        );
+
+    }
  
-  }, [accept,mr])
+  }, [accept,mr,arrive])
 
   useEffect(() => {
-     if(arvtime!=""){
-      let at=arriveTime;
-      let ct=new Date();
+if(arvtime!=""){
+  
+let at=moment(arvtime).format("hh:mm:ss a");
+let ct=moment(new Date()).format("hh:mm:ss a");
 
-let at=moment(atime).format("hh:mm:ss a");
-let ct=moment(ctt).format("hh:mm:ss a");
-
+ 
 var arriveTime = moment(at, "HH:mm:ss a");
 var crntTime = moment(ct, "HH:mm:ss a");
 var duration = moment.duration(crntTime.diff(arriveTime));
 var sec = parseInt(duration.asSeconds());
 
-if(sec>=waitTime){
+ 
+if(sec>=wt){
  setwaitTime(0);
+ setct(0)
 }else{
- setwaitTime(waitTime-sec);
+ setwaitTime(wt-sec);
+ setct(wt-sec)
 }
+     }else{
+       setwaitTime("f")
      }
   }, [arvtime])
 
@@ -189,14 +233,7 @@ if(sec>=waitTime){
     }
   }, [mr,cl])
 
-  useEffect(() => {
-   if(arrive){
-   ctcfba=90
-    }else{
-    ctcfba=40    
-   }
-  }, [arrive])
-
+  
  
   const gotoCurrentLoc=()=>{ 
     mapRef?.current?.animateToCoordinate(cl,1000)
@@ -327,6 +364,7 @@ const onClickAccept=()=>{
   
   if(isInternet){ 
     setl(true);  
+    setskip(true)
 
     const bodyData={captain:user._id,vehicle:cars._id}
     const header=authToken;
@@ -394,9 +432,8 @@ const onClickArrive=()=>{
             }
   
           if(response.success){
-            setarvtime(new Date())
-            setarrive(true) 
-            // setcaptainwt(new Date())
+            setarvtime(new Date());
+            setarrive(true);
               return;
               }
 
@@ -490,20 +527,21 @@ return dot;
       var crntTime = moment(ct, "HH:mm:ss a");
       var duration = moment.duration(crntTime.diff(acptTime));
       var sec = parseInt(duration.asSeconds());
-      let cf= sec<=ctnotcuttimeba ? 0 : ctcfba;
+      let cf= sec<=ctnotcuttimeba ? 0 : !arrive?ctcfba:ctcfaa;
      
+
       if(accept&&!arrive){
-        onClickcancelTrip("Emergency (Canceling before arrive)",sec,cf);
+        onClickcancelTrip("Emergency (Canceling before arrive)",sec,cf==0?cf:-cf);
         return;
       }
 
       if(arrive && !startride){
-        onClickcancelTrip("Emergency (Canceling after arrive)",sec,cf);
+        onClickcancelTrip("Emergency (Canceling after arrive brfore gracetime)",sec,cf==0?cf:-cf);
         return;
       }
      
       if(startride){
-        onClickcancelTrip("Emergency (Canceling after startride)",sec,cf);
+        onClickcancelTrip("Emergency (Canceling after startride)",sec,cf==0?cf:-cf);
         return;
       }
 
@@ -546,15 +584,18 @@ return dot;
   const cancelJobYes=()=>{
     //after arrive for pickup and cancel after grace time bonus +90 
     if(isInternet){
-      var at = moment(captainwt, "hh:mm:ss a"); //arive for pickup start time
-      var crntTime = moment(new Date(), "hh:mm:ss a");
-   
-      var duration = moment.duration(crntTime.diff(at));
-   
-      var sec = parseInt(duration.asSeconds());  //arived to start w8 time
-  
-    
-      // onClickcancelTrip("Emergency (Canceling after arrive)",sec,cf)
+
+      let at=moment(arvtime).format("hh:mm:ss a");
+      let ct=moment(new Date()).format("hh:mm:ss a");
+      
+       
+      var arriveTime = moment(at, "HH:mm:ss a");
+      var crntTime = moment(ct, "HH:mm:ss a");
+      var duration = moment.duration(crntTime.diff(arriveTime));
+      var sec = parseInt(duration.asSeconds()); //arived to start w8 time
+ 
+      onClickcancelTrip("Emergency (Canceling after arrive after gracetime)",sec,+ctcfaa);
+
     }else{
       utils.AlertMessage("","Please connect internet !")
     }
@@ -572,8 +613,7 @@ return dot;
     //   })
     // }
    
-    changerequest("cancelPaid","","","",sec)
- 
+    
   //   setTimeout(() => {
   //     // setaccept(!accept);
   //     // setarrive(!arrive)
@@ -648,213 +688,7 @@ return dot;
     );
   }
 
-    const renderShowLocation=()=>{
 
-      //when acpt  request
-      if(!arrive&& !startride && accept && !endride){
-       
-        
-        const title=request.pickup.name 
-        const title2=request.pickup.address
-    
-        return(
-       <View style={{position:"absolute",top:0,width:wp("80%"),borderRadius:10,padding:5,backgroundColor:"white",left:10,elevation:3,flexDirection:"row",alignItems:"center"}}>
-      
-       <View style={{width:"79.5%",height:"100%",padding:5,marginTop:20}}>
-      <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:17,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20}}> 
-      {title}
-     </theme.Text>  
-     <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:14,color:"gray",lineHeight:20}}> 
-      {title2}
-     </theme.Text> 
-       </View>
-    
-       <View style={{backgroundColor:"silver",width:"0.5%",height:"100%",opacity:0.4}} />
-    
-     
-      <TouchableOpacity  onPress={()=>{navigatetoGoogleMaps("pickup")}}  style={{width:"20%",height:"100%",padding:5,alignItems:"center",justifyContent:"center"}} >
-    
-      <Image  source={require("../../../assets/Navigate/navigate.png")} style={{width:35,height:35,opacity:0.8}} />
-      
-     <theme.Text  style={{fontSize:14,color:theme.color.buttonLinerGC1,fontFamily:theme.fonts.fontMedium}}> 
-      START
-     </theme.Text>
-    
-     </TouchableOpacity>
-      
-    
-          </View> 
-        )
-      }
-
-     // when arrive for pickup true
-
-     if (accept && arrive && !startride  && !endride){
-      const title=request.dropoff.name
-      const title2= request.dropoff.address
-  
-       let textcolor= ct>cancelTime?"#1CC625":"red"
-       let  bbc = ct>cancelTime?"gray":theme.color.buttonLinerGC1                          //button backkgrnd color
-
-      return(
-
-        <View style={{position:"absolute",top:0,left:10,right:10}}> 
-
-
-  <View style={{width:wp("80%"),height:80,borderRadius:10,padding:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center"}}>
-     
-     <View style={{width:"79.5%",height:"100%",padding:5,marginTop:20}}>
-    <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:17,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20}}> 
-    {title}
-   </theme.Text>  
-   <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:14,color:"gray",lineHeight:20}}> 
-    {title2}
-   </theme.Text> 
-     </View>
-  
-     <View style={{backgroundColor:"silver",width:"0.5%",height:"100%",opacity:0.4}} />
-  
-   
-    <TouchableOpacity  onPress={()=>{navigatetoGoogleMaps("dropoff")}}  style={{width:"20%",height:"100%",padding:5,alignItems:"center",justifyContent:"center"}} >
-  
-    <Image  source={require("../../../assets/Navigate/navigate.png")} style={{width:35,height:35,opacity:0.8}} />
-    
-   <theme.Text  style={{fontSize:14,color:theme.color.buttonLinerGC1,fontFamily:theme.fonts.fontMedium}}> 
-    START
-   </theme.Text>
-  
-   </TouchableOpacity>
-    
-  
-        </View>
-
-
-       <View style={{width:wp("95%"),borderRadius:10,padding:10,marginTop:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
-    
-    <View style={{flexDirection:"row",alignItems:"center"}}>
-   <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium}}> 
-    Waiting Time
-   </theme.Text>
-
-   <CountDown
-        size={10}
-        style={{marginLeft:5}}
-        until={waitTime}  //num of second
-        onFinish={() => {}}
-        onChange={(t)=>{setct(t)}}
-        digitStyle={{backgroundColor: '#FFF', borderWidth: 0, borderColor:theme.color.buttonLinerGC1}}
-        digitTxtStyle={{color: textcolor ,fontSize:14}}
-        timeLabelStyle={{color: 'red', fontWeight: 'bold'}}
-        separatorStyle={{color: '#1CC625'}}
-        timeToShow={['M', 'S']}
-        timeLabels={{m: null, s: null}}
-        showSeparator
-      />
-
-   </View> 
-
-   <TouchableOpacity
-   disabled={bbc=="gray"?true:false}
-   onPress={()=>{cancelJob()}}
-   style={{backgroundColor:bbc,width:90,height:30,borderRadius:5,alignItems:"center",justifyContent:"center"}}>
-   <theme.Text   style={{fontSize:12,color:"white",fontFamily:theme.fonts.fontMedium}}> 
-    CANCEL JOB
-   </theme.Text>
-   </TouchableOpacity>
-
-        </View>
- 
-      
-        </View>
-
-  
-      )
-     }
-
-
-    // when start ride
-//      if(arrive && startride && accept && !endride){
-//       const str=request.dropoffLocation.name
-//       const title=str.substr(0, str.indexOf(',')); 
-//       const title2= str.substr(str.indexOf(",") + 1)
-  
-//       console.log("pl1 : ",request.pickupLocation.name)
-//       console.log("pl2 : ",request.dropoffLocation.name)
-
-//       fetchDistanceBetweenPointsOnline(
-//          cl.latitude,
-//          cl.longitude,
-//         request.dropoffLocation.region.latitude,
-//         request.dropoffLocation.region.longitude,
-//         "startride")
-     
-//       return(
-
-//         <View style={{position:"absolute",top:0,left:10,right:10}}> 
-
-
-// <View style={{width:wp("80%"),height:80,borderRadius:10,padding:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center"}}>
-     
-//      <View style={{width:"79.5%",height:"100%",padding:5,marginTop:20}}>
-//     <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:17,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20}}> 
-//     {title}
-//    </theme.Text>  
-//    <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:14,color:"gray",lineHeight:20}}> 
-//     {title2}
-//    </theme.Text> 
-//      </View>
-  
-//      <View style={{backgroundColor:"silver",width:"0.5%",height:"100%",opacity:0.4}} />
-  
-   
-//     <TouchableOpacity  onPress={()=>{navigatetoGoogleMaps("dropoff")}}  style={{width:"20%",height:"100%",padding:5,alignItems:"center",justifyContent:"center"}} >
-  
-//     <Image  source={require("../../../assets/Navigate/navigate.png")} style={{width:35,height:35,opacity:0.8}} />
-    
-//    <theme.Text  style={{fontSize:14,color:theme.color.buttonLinerGC1,fontFamily:theme.fonts.fontMedium}}> 
-//     START
-//    </theme.Text>
-  
-//    </TouchableOpacity>
-    
-  
-//         </View>
-
-
-//    <View style={{width:wp("95%"),borderRadius:10,paddingVertical:2,paddingHorizontal:5,marginTop:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
-    
-//    <View style={{alignItems:"center",justifyContent:"center",width:"49.5%"  }}>
-//    <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-//     Travel Time
-//    </theme.Text>
-//    <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-//     {tpd}
-//    </theme.Text>
-//    </View>
-
-// <View style={{backgroundColor:"silver",width:"0.5%",height:"50%"}} />
- 
-//    <View style={{alignItems:"center",justifyContent:"center",width:"50%"  }}>
-//    <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-//     Total distance
-//    </theme.Text>
-//    <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-//    {dpd}
-//    </theme.Text>
-//    </View>
-
-//     </View>
- 
-      
-//         </View>
-
-  
-//       )
-//      }
-
-  
-  }
- 
   const clickArrivePickup=()=>{
 
     Alert.alert(
@@ -1030,6 +864,218 @@ return dot;
 //    <utils.vectorIcon.Entypo name="cross" size={22} color="gray" />
 //   </TouchableWithoutFeedback>
 // );
+
+
+const renderShowLocation=()=>{
+
+  //when acpt  request
+  if(!arrive&& !startride && accept && !endride){
+   
+    
+    const title=request.pickup.name 
+    const title2=request.pickup.address
+
+    return(
+   <View style={{position:"absolute",top:0,width:wp("80%"),borderRadius:10,padding:5,backgroundColor:"white",left:10,elevation:3,flexDirection:"row",alignItems:"center"}}>
+  
+   <View style={{width:"79.5%",height:"100%",padding:5,marginTop:20}}>
+  <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:17,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20}}> 
+  {title}
+ </theme.Text>  
+ <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:14,color:"gray",lineHeight:20}}> 
+  {title2}
+ </theme.Text> 
+   </View>
+
+   <View style={{backgroundColor:"silver",width:"0.5%",height:"100%",opacity:0.4}} />
+
+ 
+  <TouchableOpacity  onPress={()=>{navigatetoGoogleMaps("pickup")}}  style={{width:"20%",height:"100%",padding:5,alignItems:"center",justifyContent:"center"}} >
+
+  <Image  source={require("../../../assets/Navigate/navigate.png")} style={{width:35,height:35,opacity:0.8}} />
+  
+ <theme.Text  style={{fontSize:14,color:theme.color.buttonLinerGC1,fontFamily:theme.fonts.fontMedium}}> 
+  START
+ </theme.Text>
+
+ </TouchableOpacity>
+  
+
+      </View> 
+    )
+  }
+
+ // when arrive for pickup true
+
+ if (accept && arrive && !startride  && !endride){
+  const title=request.dropoff.name
+  const title2= request.dropoff.address
+
+   let textcolor= ct>cancelTime?"#1CC625":"red"
+   let  bbc = ct>cancelTime?"gray":theme.color.buttonLinerGC1                          //button backkgrnd color
+
+  return(
+
+    <View style={{position:"absolute",top:0,left:10,right:10}}> 
+
+
+<View style={{width:wp("80%"),height:80,borderRadius:10,padding:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center"}}>
+ 
+ <View style={{width:"79.5%",height:"100%",padding:5,marginTop:20}}>
+<theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:17,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20}}> 
+{title}
+</theme.Text>  
+<theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:14,color:"gray",lineHeight:20}}> 
+{title2}
+</theme.Text> 
+ </View>
+
+ <View style={{backgroundColor:"silver",width:"0.5%",height:"100%",opacity:0.4}} />
+
+
+<TouchableOpacity  onPress={()=>{navigatetoGoogleMaps("dropoff")}}  style={{width:"20%",height:"100%",padding:5,alignItems:"center",justifyContent:"center"}} >
+
+<Image  source={require("../../../assets/Navigate/navigate.png")} style={{width:35,height:35,opacity:0.8}} />
+
+<theme.Text  style={{fontSize:14,color:theme.color.buttonLinerGC1,fontFamily:theme.fonts.fontMedium}}> 
+START
+</theme.Text>
+
+</TouchableOpacity>
+
+
+    </View>
+
+
+   <View style={{width:wp("95%"),borderRadius:10,padding:10,marginTop:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
+
+<View style={{flexDirection:"row",alignItems:"center"}}>
+<theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium}}> 
+Waiting Time
+</theme.Text>
+
+{waitTime!="f" &&(
+  <CountDown
+    size={10}
+    style={{marginLeft:5}}
+    until={waitTime}  //num of second
+    onFinish={() => {}}
+    onChange={(t)=>{setct(t)}}
+    digitStyle={{backgroundColor: '#FFF', borderWidth: 0, borderColor:theme.color.buttonLinerGC1}}
+    digitTxtStyle={{color: textcolor ,fontSize:14}}
+    timeLabelStyle={{color: 'red', fontWeight: 'bold'}}
+    separatorStyle={{color: '#1CC625'}}
+    timeToShow={['M', 'S']}
+    timeLabels={{m: null, s: null}}
+    showSeparator
+  />
+)}
+
+
+</View> 
+
+<TouchableOpacity
+disabled={bbc=="gray"?true:false}
+onPress={()=>{cancelJob()}}
+style={{backgroundColor:bbc,width:90,height:30,borderRadius:5,alignItems:"center",justifyContent:"center"}}>
+<theme.Text   style={{fontSize:12,color:"white",fontFamily:theme.fonts.fontMedium}}> 
+CANCEL JOB
+</theme.Text>
+</TouchableOpacity>
+
+    </View>
+
+  
+    </View>
+
+
+  )
+ }
+
+
+// when start ride
+//      if(arrive && startride && accept && !endride){
+//       const str=request.dropoffLocation.name
+//       const title=str.substr(0, str.indexOf(',')); 
+//       const title2= str.substr(str.indexOf(",") + 1)
+
+//       console.log("pl1 : ",request.pickupLocation.name)
+//       console.log("pl2 : ",request.dropoffLocation.name)
+
+//       fetchDistanceBetweenPointsOnline(
+//          cl.latitude,
+//          cl.longitude,
+//         request.dropoffLocation.region.latitude,
+//         request.dropoffLocation.region.longitude,
+//         "startride")
+ 
+//       return(
+
+//         <View style={{position:"absolute",top:0,left:10,right:10}}> 
+
+
+// <View style={{width:wp("80%"),height:80,borderRadius:10,padding:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center"}}>
+ 
+//      <View style={{width:"79.5%",height:"100%",padding:5,marginTop:20}}>
+//     <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:17,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20}}> 
+//     {title}
+//    </theme.Text>  
+//    <theme.Text  numberOfLines={1} ellipsizeMode="tail" style={{fontSize:14,color:"gray",lineHeight:20}}> 
+//     {title2}
+//    </theme.Text> 
+//      </View>
+
+//      <View style={{backgroundColor:"silver",width:"0.5%",height:"100%",opacity:0.4}} />
+
+
+//     <TouchableOpacity  onPress={()=>{navigatetoGoogleMaps("dropoff")}}  style={{width:"20%",height:"100%",padding:5,alignItems:"center",justifyContent:"center"}} >
+
+//     <Image  source={require("../../../assets/Navigate/navigate.png")} style={{width:35,height:35,opacity:0.8}} />
+
+//    <theme.Text  style={{fontSize:14,color:theme.color.buttonLinerGC1,fontFamily:theme.fonts.fontMedium}}> 
+//     START
+//    </theme.Text>
+
+//    </TouchableOpacity>
+
+
+//         </View>
+
+
+//    <View style={{width:wp("95%"),borderRadius:10,paddingVertical:2,paddingHorizontal:5,marginTop:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
+
+//    <View style={{alignItems:"center",justifyContent:"center",width:"49.5%"  }}>
+//    <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+//     Travel Time
+//    </theme.Text>
+//    <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+//     {tpd}
+//    </theme.Text>
+//    </View>
+
+// <View style={{backgroundColor:"silver",width:"0.5%",height:"50%"}} />
+
+//    <View style={{alignItems:"center",justifyContent:"center",width:"50%"  }}>
+//    <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+//     Total distance
+//    </theme.Text>
+//    <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+//    {dpd}
+//    </theme.Text>
+//    </View>
+
+//     </View>
+
+  
+//         </View>
+
+
+//       )
+//      }
+
+
+}
+
 
   const  renderShowButton=()=>{
     let msg=""
@@ -1425,8 +1471,7 @@ return dot;
     request.pickup.location.latitude,
     request.pickup.location.longitude,
     "requestride")
-  
-      
+    
     return(
       <Modal
       animationType='fade'
@@ -1512,7 +1557,7 @@ Pickup
 {/* custmr rating  */}
 <View style={{width:"27%",flexDirection:"row",alignItems:"center",justifyContent:"space-evenly"}}>
 <utils.vectorIcon.Entypo name="user" color="silver" size={18}/>
-<Text style={{fontSize:14}}>3.0</Text> 
+<Text style={{fontSize:14}}>{ar}</Text> 
 <utils.vectorIcon.Entypo name="star" color={theme.color.buttonLinerGC1} size={18}/>
 </View>
 
