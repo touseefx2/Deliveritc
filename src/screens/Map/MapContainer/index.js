@@ -1,5 +1,5 @@
 import React ,{useEffect,useRef,useState,useCallback} from 'react';
-import { StyleSheet,TouchableOpacity,View,Linking,SafeAreaView,Text,Modal, ImageBackground,Dimensions,Image,Alert,ScrollView,TouchableWithoutFeedback} from 'react-native';
+import { StyleSheet,TouchableOpacity,View,Linking,SafeAreaView,Text,  ImageBackground,Dimensions,Image,Alert,ScrollView,TouchableWithoutFeedback} from 'react-native';
 import styles from './styles';
 import theme from "../../../themes/index"
 import utils from "../../../utils/index"
@@ -18,7 +18,7 @@ import StarRating from 'react-native-star-rating';
 import {Input } from '@ui-kitten/components';
 import { tr } from 'date-fns/locale';
 import db from "../../../database/index"
-import { acc } from 'react-native-reanimated';
+import  Modal   from 'react-native-modal';
 
 
 const gapikey="AIzaSyAJeMjKbTTRvoZJe0YoJc48VhaqbtoTmug"
@@ -40,7 +40,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   //  ,request,changerequest,trip,settrip   //userstore
   const {cars,setCars} =  props.carStore;
   const { user,setUser,cl ,online,authToken,Logout} = props.userStore;
-  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal,tcp,dpd,tpd,settcp,setdpd,settpd } = props.tripStore;
+  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal,tcp,dpd,tpd,settcp,setdpd,settpd,normalPay,setnormalPay ,normalPaycash,setnormalPaycash} = props.tripStore;
   const {isInternet,isLocation} = props.generalStore;
 
   let isl=isLocation
@@ -65,6 +65,10 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   const [activeChecked, setActiveChecked] = useState(online);
 
   const [tripdetailmodal,settripdetailmodal] = useState(false);
+
+  const [cashconfirmMV, setcashconfirmMV] = useState(false);
+  const [cashG, setcashG] = useState(false);  // colctd cash i sgret or lower than  total rent amount
+  const [checkBox, setcheckBox] = useState(false);  // colctd cash i sgret or lower than  total rent amount
  
 
   // const [atime,setatime] = useState("");  //trip acept time jb acpt kr lya us k bad ktne time ho gya wo chk krta
@@ -91,8 +95,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   const [cash,setcash] = useState("");
  
   const mapRef = useRef();
-  
-
+   
   const clearallFields=()=>{
     settripdetailmodal(false)
     setridemodal(false);
@@ -102,7 +105,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setstartride(false);
     setendride(false);
     setp(0);
-    setct(wt)
+    setct(wt);
     setatime("");
     settcp("...");
     settpd("...");
@@ -110,8 +113,16 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setnolpl(0);
     setwaitTime("f");
     setarvtime("");
-    setar(0)
-    
+    setar(0);
+    setskip(false);
+    setnormalPay(false)
+    setstartride(false);
+    setendride(false);
+    setnormalPay(false)
+    setnormalPaycash("---");
+    setcashconfirmMV(false);
+    setcashG(false);
+    setcheckBox(false)
     // setcash("");
     // setstarCount(0);
 
@@ -219,7 +230,7 @@ if(sec>=wt){
  setct(wt-sec)
 }
      }else{
-       setwaitTime("f")
+       setwaitTime("f");
      }
   }, [arvtime])
 
@@ -230,7 +241,25 @@ if(sec>=wt){
     }
   }, [mr,cl])
 
-  
+  useEffect(() => {
+   if(cl!=""&&startride&&request){
+         
+    fetchDistanceBetweenPointsOnline(
+      cl.latitude,
+      cl.longitude,
+     request.dropoff.location.latitude,
+     request.dropoff.location.longitude,
+     "startride")
+
+   }
+  }, [cl,request,startride])
+
+  useEffect(() => {
+   if(startride){
+       setwaitTime("f");
+       setct(wt)
+   }
+  }, [startride])
  
   const gotoCurrentLoc=()=>{ 
     mapRef?.current?.animateToCoordinate(cl,1000)
@@ -284,7 +313,7 @@ useEffect(() => {
       }
 
       if(skip || accept){
-        clearInterval(interval)
+        clearInterval(interval);
       }
 
   return () => {
@@ -298,36 +327,49 @@ useEffect(() => {
 
 
   const fetchDistanceBetweenPointsOnline = (lat1, lng1, lat2, lng2,c) => {  
+     
     var urlToFetchDistance = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='+lat1+','+lng1+'&destinations='+lat2+'%2C'+lng2+'&key='+gapikey;
     fetch(urlToFetchDistance)
              .then(res => {
              return res.json()
   })
   .then(res => {
+      
+          if(res){
 
-           
-            
+          
               var distanceString = res.rows[0].elements[0].distance.text;
               var timeString = res.rows[0].elements[0].duration.text;
               var timeSecond = res.rows[0].elements[0].duration.value;
               let s=timeSecond
-              var travelTime = moment(new Date()).add(s, 'seconds').format('hh:mm A')
+              var travelTime = moment(new Date()).add(s, 'seconds').format('h : mm A')
 
             if(c=="requestride"){
               // setdcp(distanceString)
               settcp(timeString)
-            }else if(c=="startride"){
+            }
+            else if(c=="startride"){
             
               setdpd(distanceString)
               settpd(travelTime)
    
                     }
+           else if(c=="endride"){
 
+            let distanceInMeter= res.rows[0].elements[0].distance.value;  //in meter
+            let distanceInKm= distanceInMeter/1000;  //in meter to km
+            console.log("pickup se captn k cl ka distance in endride  ",distanceInKm)
+
+             onClickEnd(distanceInKm);
+                     }
+
+          }
             
             // return distanceString;
     // Do your stuff here
   })
   .catch(error => {
+          utils.AlertMessage("Fetch distance api error",error),   
             console.log("Problem occurred fetchdsistancematric : ",error);
   });
 }
@@ -377,7 +419,8 @@ const onClickAccept=()=>{
               }
 
            if(!response.success){
-                utils.AlertMessage("",response.message)
+                utils.AlertMessage("",response.message);
+                onclickSkip();
                return;
                }
    
@@ -446,19 +489,11 @@ const onClickArrive=()=>{
 
 const onClickStart=()=>{
 
-  let at=moment(arvtime).format("hh:mm:ss a");
-  let ct=moment(new Date()).format("hh:mm:ss a");
   
-   
-  var arriveTime = moment(at, "HH:mm:ss a");
-  var crntTime = moment(ct, "HH:mm:ss a");
-  var duration = moment.duration(crntTime.diff(arriveTime));
-  var sec = parseInt(duration.asSeconds()); //arived to start w8 time
-
   if(isInternet){ 
     setl(true);  
 
-    const bodyData={"waiting_time":sec}
+    const bodyData={}
     const header=authToken;
     // method, path, body, header
     db.api.apiCall("put",db.link.startTrip+request._id,bodyData,header)
@@ -499,6 +534,54 @@ const onClickStart=()=>{
  
 }
  
+const onClickEnd=(d)=>{
+
+  
+  if(isInternet){ 
+    setl(true);
+
+    const bodyData={distance:d}
+    const header=authToken;
+    // method, path, body, header
+    db.api.apiCall("put",db.link.endTrip+request._id,bodyData,header)
+    .then((response) => {
+          
+           console.log("End trip response : " , response);
+           setl(false);
+
+          if(response.msg=="Invalid Token"){
+            utils.AlertMessage("", response.msg ) ;
+            onLogout();
+            return;
+            }
+  
+          if(response.success){
+            setendride(true);
+            setnormalPaycash(response.total_rent)
+              return;
+              }
+
+           if(!response.success){
+                utils.AlertMessage("",response.message)
+               return;
+               }
+   
+
+        return;
+    }).catch((e) => {
+         setl(false);
+      //  utils.AlertMessage("","Network request failed");
+       console.error("End trip catch error : ", e)
+      return;
+    })
+    
+
+  }else{
+    utils.AlertMessage("","Please connect internet")
+  }
+ 
+}
+
   const onTextLayout = useCallback(e => {
      setnolpl(e.nativeEvent.lines.length<=5?e.nativeEvent.lines.length:5)
 }, []);
@@ -728,8 +811,7 @@ return dot;
       ]
     );
   }
-
-
+ 
   const clickArrivePickup=()=>{
 
     Alert.alert(
@@ -785,33 +867,30 @@ return dot;
 
   const clickEndRide=()=>{
 
-    // Alert.alert(
-    //   "Confirmation",
-    //   "Are you sure you want End ride ?",
-    //   [
-    //     {
-    //       text: "No",
-    //       onPress: () => console.log("Cancel Pressed"),
-    //       style: "cancel"
-    //     },
-    //     { text: "Yes", onPress: () =>  {
-    //        setl(true);
-    //       setTimeout(() => {
-    //         if(trip.length>0){
-    //           trip.map((e,i,a)=>{
-    //           if(e.id==request.id){
-    //             trip[i].endride=true
-    //             trip[i].endRideTime=new Date()
-    //             }
-    //           })
-    //         }
-    //         changerequest("endRide")
-    //         setendride(true) 
-    //         setl(false);
-    //       }, 1500);
-    //     } }
-    //   ]
-    // );
+    Alert.alert(
+      "Confirmation",
+      "Are you sure you want End ride ?",
+      [
+        {
+          text: "No",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel"
+        },
+        { text: "Yes", onPress: () =>  {
+          if(isl==true){
+           fetchDistanceBetweenPointsOnline(
+            request.pickup.location.latitude,
+            request.pickup.location.longitude,
+            cl.latitude,
+            cl.longitude,
+            "endride"
+           )
+           }else if(isl==false){
+             utils.AlertMessage("","Please turn on location !")
+           }
+        } }
+      ]
+    );
  
   }
  
@@ -828,53 +907,63 @@ return dot;
 //     // clearallFields()
 //   }
 
-//  const  clickCashSubmit=()=>{
+const confirmCashSubmit=(c,ra)=>{
+  Alert.alert(
+    "Confirmation",
+    "Are you sure submit this amount ?",
+    [
+      {
+        text: "No",
+        onPress: () => console.log("Cancel Pressed"),
+        style: "cancel"
+      },
+      { text: "Yes", onPress: () =>  {
+        alert(c)
+        //  setl(true);
 
-//   if(parseFloat(cash)< parseFloat(request.rs)){
-//    Alert.alert("Please donot enter cash  less than fare rupe ! ")
-//   }else{
-//     Alert.alert(
-//       "Confirmation",
-//       "Are you sure submit this amount ?",
-//       [
-//         {
-//           text: "No",
-//           onPress: () => console.log("Cancel Pressed"),
-//           style: "cancel"
-//         },
-//         { text: "Yes", onPress: () =>  {
-   
-//            setl(true);
+        //  if(trip.length>0){
+        //   trip.map((e,i,a)=>{
+        //   if(e.id==request.id){
+        //     trip[i].normalPay=true
+        //     trip[i].collectcash=cash
+        //     }
+        //   })
+        // }
+        //  changerequest("cash","","",cash);
+
+        // setTimeout(() => {
+        //   setl(false);
+        //   setcash("")
+        // }, 1200);
+      } }
+    ]
+  );
+}
+
+ const  clickCashSubmit=()=>{
+   let npc=normalPaycash.toFixed()
+ 
+  if(cash<npc){
+      setcashG(false)
+      setcashconfirmMV(true)
+  }else if(cash>npc){
+    setcashG(true)
+    setcashconfirmMV(true);
+  }else
+  {
+   confirmCashSubmit("","")
+  }
+
   
-//            if(trip.length>0){
-//             trip.map((e,i,a)=>{
-//             if(e.id==request.id){
-//               trip[i].normalPay=true
-//               trip[i].collectcash=cash
-//               }
-//             })
-//           }
-//            changerequest("cash","","",cash);
-  
-//           setTimeout(() => {
-//             setl(false);
-//             setcash("")
-//           }, 1200);
-//         } }
-//       ]
-//     );
-//   }
+ }
 
  
-
-//  }
-
-//  const renderIcon = (props) => (
+ const renderIcon = (props) => (
  
-//   <TouchableWithoutFeedback onPress={()=>setcash("")} >
-//    <utils.vectorIcon.Entypo name="cross" size={22} color="gray" />
-//   </TouchableWithoutFeedback>
-// );
+  <TouchableWithoutFeedback onPress={()=>setcash("")} >
+   <utils.vectorIcon.Entypo name="cross" size={22} color="gray" />
+  </TouchableWithoutFeedback>
+);
 
 
 const renderShowLocation=()=>{
@@ -1007,17 +1096,11 @@ CANCEL JOB
 // when start ride
      if(arrive && startride && accept && !endride){
       
+      
       const title=request.dropoff.name
       const title2= request.dropoff.address
 
-    
-      fetchDistanceBetweenPointsOnline(
-         cl.latitude,
-         cl.longitude,
-        request.dropoff.location.latitude,
-        request.dropoff.location.longitude,
-        "startride")
- 
+
       return(
 
         <View style={{position:"absolute",top:0,left:10,right:10}}> 
@@ -1053,22 +1136,22 @@ CANCEL JOB
 
    <View style={{width:wp("95%"),borderRadius:10,paddingVertical:2,paddingHorizontal:5,marginTop:5,backgroundColor:"white",elevation:3,flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
 
-   <View style={{alignItems:"center",justifyContent:"center",width:"49.5%"  }}>
-   <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-    Travel Time
+   <View style={{alignItems:"center",justifyContent:"center",width:"49%" }}>
+   <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:14,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase",lineHeight:25}}> 
+    Est Travel Time
    </theme.Text>
-   <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-    {tpd}
-   </theme.Text>
+   <theme.Text   numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase",lineHeight:25}}> 
+    {tpd} 
+    </theme.Text>
    </View>
 
-<View style={{backgroundColor:"silver",width:"0.5%",height:"50%"}} />
+<View style={{backgroundColor:"silver",width:"0.5%",height:"60%"}} />
 
-   <View style={{alignItems:"center",justifyContent:"center",width:"50%"  }}>
-   <theme.Text   style={{fontSize:16,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
-    Total distance
+   <View style={{alignItems:"center",justifyContent:"center",width:"49%"  }}>
+   <theme.Text  numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:14,color:"gray",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase",lineHeight:25}}> 
+    Est Total distance
    </theme.Text>
-   <theme.Text   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase"}}> 
+   <theme.Text  numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"uppercase",lineHeight:25}}> 
    {dpd}
    </theme.Text>
    </View>
@@ -1077,15 +1160,13 @@ CANCEL JOB
 
   
         </View>
-
-
+ 
       )
      }
 
 
 }
-
-
+ 
   const  renderShowButton=()=>{
     let msg=""
     let c=0;
@@ -1098,225 +1179,217 @@ CANCEL JOB
       msg="Start Ride"
       c=1;
      }
-     //else if(accept && arrive && startride && !endride){
-    //   msg="End trip"
-    //   c=2;
-    // }else if(accept && arrive && startride && endride){
-    
-    //   if(request.cardPay==true )
-    //   {
-    //     msg="Finish"
-    //     c=3
-    //   }
+     else if(accept && arrive && startride && !endride){
+      msg="End trip"
+      c=2;
+    }else if(accept && arrive && startride && endride){
+        //  c=4
+      // if(request.cardPay==true )
+      // {
+      //   msg="Finish"
+      //   c=3
+      // }
       
-    //   if(request.cardPay==false)
-    //   {
-    //   msg="submit"
-    //    c=4  
-    //   }
+      // if(request.cardPay==false)
+      // {
+      // msg="submit"
+      //  c=4  
+      // }
 
-    //   if(request.normalPay==true )
-    //   {
-    //     msg="Finish"
-    //     c=5
-    //   }
-      
-    // }
+      // if(request.normalPay==true )
+      // {
+      //   msg="Finish"
+      //   c=5
+      // }
 
- //if card pay done already
-  //  if(c==3){
-  //   return(
+      if(!normalPay){msg="submit";c=4}else{msg="finish";c=5}
+      
+    }
 
-  //     <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10}}>
-      
- 
-  //       <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5,flexDirection:"row"}}>
-       
-  //      <View style={{marginTop:-4}}>
-  //      <utils.vectorIcon.SimpleLineIcons name="credit-card" color="black" size={30} />
-  //      </View>
-       
-  //      <View style={{marginLeft:10,width:"85%"}}> 
-      
-  //      <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
-  //       Trip paid by card
-  //      </theme.Text>
-      
-  //      <theme.Text  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",marginTop:10}}>
-  //       You can view yours earnings in captain portal.
-  //      </theme.Text>
-      
-  //      </View>
-       
-  //     </View>
-      
-  //     <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
-  //      <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:22,fontFamily:theme.fonts.fontMedium,color:"black",textTransform:"capitalize",lineHeight:25}}>
-  //       Rate {request.name}
-  //      </theme.Text>
-      
-  //      <StarRating
-  //              containerStyle={{marginVertical:15}}
-  //             disabled={false}
-  //             maxStars={5}
-  //             starStyle={{borderWidth:0}}
-  //             fullStarColor={theme.color.buttonLinerGC1}
-  //             rating={starCount}
-  //             selectedStar={(rating) => setstarCount(rating)}
-  //           />
-      
-  //     </View>
-      
-  //           <TouchableOpacity onPress={()=>{clickFinish()}} style={[styles.BottomButton,{width:"100%"}]}>
-  //           <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
-  //                   <View style={[styles.ButtonRight,{width:"100%"}]}>
-  //                   <Text style={styles.buttonText}>{msg}</Text> 
-  //                    </View>
-  //            </LinearGradient>
-  //            </TouchableOpacity>
-   
-  //     </View>
-      
-  //         )
- 
-  //  }
-
-   //if colect cash in hand
-//    else if(c==4){
-
+//  if card pay done already
+//    if(c==3){
 //     return(
-
-//       <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10}}>
+// null
+//       // <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10}}>
       
  
-//         <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
+//       //   <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5,flexDirection:"row"}}>
        
-      
-      
-//        <theme.Text  style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black" }}>
-//         Collect cash
-//        </theme.Text>
-      
-//        <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",textTransform:"capitalize",lineHeight:20,width:"95%"}}>
-//         from {request.name}
-//        </theme.Text>
-
-//        <View style={{flexDirection:"row",alignItems:"center",width:"100%",justifyContent:"space-between",marginTop:20}}>
-
-//        <theme.Text  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",textTransform:"capitalize",lineHeight:20}}>
-//         Total fare
-//        </theme.Text>
-
-// <View style={{flexDirection:"row",alignItems:"center"}}>
-// <theme.Text  style={{fontSize:22,fontFamily:theme.fonts.fontMedium,color:"gray" }}>
-//         PKR
-// </theme.Text>
-// <theme.Text  style={{fontSize:22,fontFamily:theme.fonts.fontMedium,color:"black",marginLeft:5}}>
-//          400
-//  </theme.Text>
-
-// </View>
-        
+//       //  <View style={{marginTop:-4}}>
+//       //  <utils.vectorIcon.SimpleLineIcons name="credit-card" color="black" size={30} />
+//       //  </View>
        
+//       //  <View style={{marginLeft:10,width:"85%"}}> 
       
-
-//        </View>
+//       //  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
+//       //   Trip paid by card
+//       //  </theme.Text>
       
-//        </View>
+//       //  <theme.Text  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",marginTop:10}}>
+//       //   You can view yours earnings in captain portal.
+//       //  </theme.Text>
+      
+//       //  </View>
        
-       
-//       <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
-//        <theme.Text   style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
-//        Enter amount collected
-//        </theme.Text>
+//       // </View>
+      
+//       // <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
+//       //  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:22,fontFamily:theme.fonts.fontMedium,color:"black",textTransform:"capitalize",lineHeight:25}}>
+//       //   Rate {request.name}
+//       //  </theme.Text>
+      
+//       //  <StarRating
+//       //          containerStyle={{marginVertical:15}}
+//       //         disabled={false}
+//       //         maxStars={5}
+//       //         starStyle={{borderWidth:0}}
+//       //         fullStarColor={theme.color.buttonLinerGC1}
+//       //         rating={starCount}
+//       //         selectedStar={(rating) => setstarCount(rating)}
+//       //       />
+      
+//       // </View>
+      
+//       //       <TouchableOpacity onPress={()=>{clickFinish()}} style={[styles.BottomButton,{width:"100%"}]}>
+//       //       <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
+//       //               <View style={[styles.ButtonRight,{width:"100%"}]}>
+//       //               <Text style={styles.buttonText}>{msg}</Text> 
+//       //                </View>
+//       //        </LinearGradient>
+//       //        </TouchableOpacity>
    
-//       <Input
-//       value={cash}
-//       keyboardType="number-pad"
-//       label=''
-//       placeholder={"0"}
-//       accessoryRight={cash!=""?renderIcon:""}
-//       onChangeText={nextValue => setcash(nextValue)}
-//     />
-     
-      
-//       </View>
-      
-//             <TouchableOpacity disabled={cash==""?true:false} onPress={()=>{clickCashSubmit()}} style={[styles.BottomButton,{width:"100%"}]}>
-//             <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
-//                     <View style={[styles.ButtonRight,{width:"100%"}]}>
-//                     <Text style={[styles.buttonText,{color:cash==""?"silver":"white"}]}>{msg}</Text> 
-//                      </View>
-//              </LinearGradient>
-//              </TouchableOpacity>
-   
-//       </View>
+//       // </View>
       
 //           )
-
+ 
 //    }
+// else
+  //  if colect cash in hand normal pay false
+  if(c==4){
 
-   //done submit cash
-  //  else  if(c==5){
-  //   return(
-
-  //     <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10}}>
+    return(
+       <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10}}>
       
+        <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
+          
+      
+       <theme.Text  style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black" }}>
+        Collect cash
+       </theme.Text>
+      
+       <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",textTransform:"capitalize",lineHeight:20,width:"95%"}}>
+        from {request.customer.fullname}
+       </theme.Text>
+
+       <View style={{flexDirection:"row",alignItems:"center",width:"100%" ,justifyContent:"space-between",marginTop:20}}>
+
+       <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",textTransform:"capitalize",lineHeight:20,width:"30%"}}>
+        Total fare
+       </theme.Text>
  
-  //       <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5,flexDirection:"row"}}>
+      <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:22,lineHeight:30,fontFamily:theme.fonts.fontMedium,color:"#383838",textAlign:"right",width:"65%", }}>
+              PKR {normalPaycash!="---"?normalPaycash.toFixed():normalPaycash}
+      </theme.Text>
+  
+
+       </View>
+      
+       </View>
        
-  //      <View style={{marginTop:-4}}>
-  //      <utils.vectorIcon.MaterialIcons name="payments" color="black" size={30} />
-  //      </View>
        
-  //      <View style={{marginLeft:10,width:"85%"}}> 
-      
-  //      <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
-  //       Route eranings
-  //      </theme.Text>
-      
-  //      <theme.Text  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",marginTop:10}}>
-  //       You can view yours earnings in captain portal.
-  //      </theme.Text>
-      
-  //      </View>
-       
-  //     </View>
-      
-  //     <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
-  //      <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:22,fontFamily:theme.fonts.fontMedium,color:"black",textTransform:"capitalize",lineHeight:25}}>
-  //       Rate {request.name}
-  //      </theme.Text>
-      
-  //      <StarRating
-  //              containerStyle={{marginVertical:15}}
-  //             disabled={false}
-  //             maxStars={5}
-  //             starStyle={{borderWidth:0}}
-  //             fullStarColor={theme.color.buttonLinerGC1}
-  //             rating={starCount}
-  //             selectedStar={(rating) => setstarCount(rating)}
-  //           />
-      
-  //     </View>
-      
-  //           <TouchableOpacity onPress={()=>{clickFinish()}} style={[styles.BottomButton,{width:"100%"}]}>
-  //           <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
-  //                   <View style={[styles.ButtonRight,{width:"100%"}]}>
-  //                   <Text style={styles.buttonText}>{msg}</Text> 
-  //                    </View>
-  //            </LinearGradient>
-  //            </TouchableOpacity>
+      <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
+       <theme.Text   style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
+       Enter amount collected
+       </theme.Text>
    
-  //     </View>
+      <Input
+      value={cash}
+      keyboardType="number-pad"
+      label=''
+      placeholder='0'
+      accessoryRight={cash!=""?renderIcon:""}
+      onChangeText={nextValue => setcash(parseInt(nextValue.replace(/\D/gm, '')))}
+    />
+     
       
-  //         )
+      </View>
+      
+            <TouchableOpacity disabled={cash==""?true:false} onPress={()=>{clickCashSubmit()}} style={[styles.BottomButton,{width:"100%"}]}>
+            <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
+                    <View style={[styles.ButtonRight,{width:"100%"}]}>
+                    <Text style={[styles.buttonText,{color:cash==""?"silver":"white"}]}>{msg}</Text> 
+                     </View>
+             </LinearGradient>
+             </TouchableOpacity>
+   
+      </View>
+      
+          )
+
+   }
+
+   else
+  //  done submit cash normal pay true
+    if(c==5){
+    return(
+null
+      // <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10}}>
+      
  
-  //  } 
+      //   <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5,flexDirection:"row"}}>
+       
+      //  <View style={{marginTop:-4}}>
+      //  <utils.vectorIcon.MaterialIcons name="payments" color="black" size={30} />
+      //  </View>
+       
+      //  <View style={{marginLeft:10,width:"85%"}}> 
+      
+      //  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
+      //   Route eranings
+      //  </theme.Text>
+      
+      //  <theme.Text  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",marginTop:10}}>
+      //   You can view yours earnings in captain portal.
+      //  </theme.Text>
+      
+      //  </View>
+       
+      // </View>
+      
+      // <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
+      //  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:22,fontFamily:theme.fonts.fontMedium,color:"black",textTransform:"capitalize",lineHeight:25}}>
+      //   Rate {request.name}
+      //  </theme.Text>
+      
+      //  <StarRating
+      //          containerStyle={{marginVertical:15}}
+      //         disabled={false}
+      //         maxStars={5}
+      //         starStyle={{borderWidth:0}}
+      //         fullStarColor={theme.color.buttonLinerGC1}
+      //         rating={starCount}
+      //         selectedStar={(rating) => setstarCount(rating)}
+      //       />
+      
+      // </View>
+      
+      //       <TouchableOpacity onPress={()=>{clickFinish()}} style={[styles.BottomButton,{width:"100%"}]}>
+      //       <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
+      //               <View style={[styles.ButtonRight,{width:"100%"}]}>
+      //               <Text style={styles.buttonText}>{msg}</Text> 
+      //                </View>
+      //        </LinearGradient>
+      //        </TouchableOpacity>
+   
+      // </View>
+      
+          )
+ 
+   } 
 
   // c==0 , c==1 , c==2 
   
-  //else{
+  else{
    
   return(
       <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10 ,flexDirection:"row",justifyContent:"space-between"}}>
@@ -1338,7 +1411,7 @@ CANCEL JOB
       </View>
     )
 
-  //  } 
+    } 
  
   }
 
@@ -1545,7 +1618,7 @@ Pickup
 
 <View style={{backgroundColor:"white",padding:5,marginTop:-20,alignSelf:"center",borderRadius:10,elevation:1}}>
 <theme.Text numberOfLines={1} ellipsizeMode="tail"   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium}}> 
-{tcp} | {request.distance} km
+{tcp} | {request.distance.toFixed(2)} km
  </theme.Text>
 </View>
  
@@ -1599,6 +1672,185 @@ onPress={()=>{onClickAccept()}}>
   
     </Modal>
     )
+}
+
+const renderCashConfirmModal=()=>{
+
+let ra= !cashG?(normalPaycash.toFixed()-cash):(cash-normalPaycash.toFixed())  //remaining amount
+
+let uwta=30;  //user walet totoal amount
+
+  return(
+    <Modal 
+    isVisible={cashconfirmMV}
+    backdropOpacity={0.7}
+    
+    animationIn="fadeInUp"
+    animationOut="fadeOutDown"
+    animationInTiming={600}
+    animationOutTiming={600}
+    backdropTransitionInTiming={600}
+    backdropTransitionOutTiming={600}
+    onRequestClose={() => { setcashconfirmMV(false);setcheckBox(false) }}
+ >
+
+    <View style=
+    {{
+    backgroundColor:"white", 
+    padding:10,
+    width:"100%",
+    borderRadius:5,
+    alignSelf: 'center'
+    }}>
+
+ <TouchableOpacity onPress={()=>{setcashconfirmMV(false);setcheckBox(false)}} style={{alignSelf:"flex-end"}}> 
+  <utils.vectorIcon.Entypo name={"cross"} color={"#0e47a1"}  size={26}/> 
+ </TouchableOpacity>
+ <Text style={{fontSize:18,color:"#0e47a1",fontWeight:"bold"}}>{cashG?"Collected cash amount is greater than fare rupees":"Collected cash amount is less than fare rupees"}</Text>
+
+
+  {/* <ScrollView style={{width:"100%"}}>  */}
+
+ 
+{cashG&&(
+<View>
+
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:30}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"30%",lineHeight:20}}>Total Fare</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"65%",textAlign:"right",lineHeight:20}}>PKR {normalPaycash.toFixed()}</Text> 
+</View>
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>Collected Cash</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"55%",textAlign:"right",lineHeight:20}}>PKR {cash}</Text> 
+</View>
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>Extra amount</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"green",width:"55%",textAlign:"right",lineHeight:20}}>PKR {ra}</Text> 
+</View>
+
+
+<View style={{flexDirection:"row",width:"100%",marginTop:30,justifyContent:"space-between"}}>
+ <TouchableOpacity onPress={()=>setcheckBox(!checkBox)} style={{width:"5%",top:5}}> 
+{!checkBox ?(
+  <utils.vectorIcon.Entypo name={"circle"} color={"silver"}  size={15}/> 
+  ):(
+<utils.vectorIcon.FontAwesome name={"circle"} color={"#0e47a1"}  size={15}/> 
+  )}
+ </TouchableOpacity>
+ <TouchableOpacity onPress={()=>setcheckBox(!checkBox)} style={{width:"92%"}}>
+ <Text  style={{fontSize:15,color:!checkBox?"silver":"black"}}>Add extra amount in user wallet</Text> 
+ </TouchableOpacity>
+</View>
+
+{checkBox&&(
+<View style={{marginTop:20}}>
+
+<View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
+<utils.vectorIcon.AntDesign name={"wallet"} color={"#0e47a1"}  size={28} style={{width:"10%"}}/> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:17,color:"#0e47a1",width:"88%",lineHeight:20,textTransform:"capitalize"}}>{request.customer.fullname}</Text> 
+</View>
+
+<View style={{marginTop:10}}>
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>Total amont</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"55%",textAlign:"right",lineHeight:20}}>PKR {uwta}</Text> 
+</View>
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>New amount</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"55%",textAlign:"right",lineHeight:20}}>PKR {uwta+ra}</Text> 
+</View>
+</View>
+ 
+</View>)}
+
+            <TouchableOpacity   onPress={()=>{confirmCashSubmit(checkBox?"addinuserwallet":"",ra)}} style={[styles.BottomButton,{width:"100%",marginTop:30}]}>
+            <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
+                    <View style={[styles.ButtonRight,{width:"100%"}]}>
+                    <Text style={[styles.buttonText,{color:"white"}]}>Submit</Text> 
+                     </View>
+             </LinearGradient>
+             </TouchableOpacity>
+
+</View>
+ )}
+
+
+{!cashG&&(
+<View>
+
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:30}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"30%",lineHeight:20}}>Total Fare</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"65%",textAlign:"right",lineHeight:20}}>PKR {normalPaycash.toFixed()}</Text> 
+</View>
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>Collected Cash</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"55%",textAlign:"right",lineHeight:20}}>PKR {cash}</Text> 
+</View>
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>Remaining</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"red",width:"55%",textAlign:"right",lineHeight:20}}>PKR {ra}</Text> 
+</View>
+
+
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",marginTop:30}}>
+ <TouchableOpacity onPress={()=>setcheckBox(!checkBox)} style={{width:"5%",top:5}}> 
+{!checkBox ?(
+  <utils.vectorIcon.Entypo name={"circle"} color={"silver"}  size={15}/> 
+  ):(
+<utils.vectorIcon.FontAwesome name={"circle"} color={"#0e47a1"}  size={15}/> 
+  )}
+ </TouchableOpacity>
+ <TouchableOpacity onPress={()=>setcheckBox(!checkBox)} style={{width:"92%"}}>
+ <Text  style={{fontSize:15,color:!checkBox?"silver":"black"}}>Cut remaining amount from user wallet</Text> 
+ </TouchableOpacity>
+</View>
+
+{checkBox&&(
+<View style={{marginTop:20}}>
+
+<View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
+<utils.vectorIcon.AntDesign name={"wallet"} color={"#0e47a1"}  size={28} style={{width:"10%"}}/> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:17,color:"#0e47a1",width:"88%",lineHeight:20,textTransform:"capitalize"}}>{request.customer.fullname}</Text> 
+</View>
+
+<View style={{marginTop:10}}>
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>Total amont</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"55%",textAlign:"right",lineHeight:20}}>PKR {uwta}</Text> 
+</View>
+{uwta>=ra?(
+<View>
+<View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>New amount</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"55%",textAlign:"right",lineHeight:20}}>PKR {uwta-ra}</Text> 
+</View>
+
+            <TouchableOpacity   onPress={()=>{confirmCashSubmit("cutfromuserwallet",ra)}} style={[styles.BottomButton,{width:"100%",marginTop:30}]}>
+            <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
+                    <View style={[styles.ButtonRight,{width:"100%"}]}>
+                    <Text style={[styles.buttonText,{color:"white"}]}>Submit</Text> 
+                     </View>
+             </LinearGradient>
+             </TouchableOpacity>
+</View>
+):(
+  <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"red",marginTop:10}}>Sorry user have no wallet amount</Text> 
+)}
+
+</View>
+
+
+</View>)}
+ 
+
+
+</View>
+ )}
+
+{/* </ScrollView> */}
+    </View>
+  </Modal>
+   )
 }
 
   //markers
@@ -1668,26 +1920,7 @@ onPress={()=>{onClickAccept()}}>
     </Marker>
     )
   }
- 
-//   const onChnageUserLoc=(e)=>{
-//   // console.log("e : ",e.nativeEvent.coordinate)
-
-//   const window = Dimensions.get('window');
-//   const { width, height }  = window
-//   const LATITUD_DELTA = 0.0922
-//   const LONGITUDE_DELTA = LATITUD_DELTA + (width / height) 
-
-//   const r= 
-//   {
-//    latitude: e.nativeEvent.coordinate.latitude ,
-//    longitude: e.nativeEvent.coordinate.longitude  ,
-//    latitudeDelta:LATITUD_DELTA,
-//    longitudeDelta: LONGITUDE_DELTA,
-//  }
-
-// setcl(r)
-
-//   }
+    console.log("p : ",p)
 
  
   return(
@@ -1736,6 +1969,7 @@ onPress={()=>{onClickAccept()}}>
 {!accept &&<SearchBox gotoCurrentLoc={()=>gotoCurrentLoc()}  Search={search} accept={accept} propsH={props.propsH} setSearch={(t)=>setsearch(t)} /> }
 {(!accept && ridemodal==false ) && <Footer   active={activeChecked}/>}
 {(!accept &&  ridemodal==true && request) && renderRideRequestModal() }
+{renderCashConfirmModal()}
 
  <utils.Loader   loader={l} />
  

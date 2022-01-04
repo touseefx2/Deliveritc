@@ -16,6 +16,7 @@ const acceptTrip="trip/acceptTrip/"
 const skipTrip="user/skipTrip/"
 const arriveTrip="trip/arriveTrip/"
 const startTrip="trip/startTrip/"
+const endTrip="trip/endTrip/"
 const getAvgRating="user/getAverageRating?user="
 const cancelTrip="trip/cancelTrip/"
 // const getAlbumsById = "customer/albums?customer_id=" //login cstmr buy albums
@@ -25,5 +26,5 @@ const cancelTrip="trip/cancelTrip/"
 export  default link ={
     links,login,signup,updateUser
     ,uploadFile,getCar,updateTerms
-    ,getUserById,getTripsbyId,acceptTrip,arriveTrip,startTrip,
+    ,getUserById,getTripsbyId,acceptTrip,arriveTrip,startTrip,endTrip,
     skipTrip,cancelTrip,getAvgRating}

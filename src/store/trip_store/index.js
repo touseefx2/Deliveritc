@@ -35,7 +35,9 @@ constructor(){
    
   @persist('object') @observable  arrive = false; 
   @persist('object')  @observable  startride = false; 
-  @observable  endride = false; 
+  @persist('object') @observable  endride = false; 
+  @persist('object') @observable  normalPay = false; 
+  @persist('object') @observable  normalPaycash = "---";
   
   @persist('object') @observable  ar = 0;   //req user avg rating
 
@@ -59,11 +61,17 @@ constructor(){
     this.tpd=obj
    }
 
+   @action setnormalPay=(obj)=>{         //set trip
+    this.normalPay=obj
+   }
+
+   @action setnormalPaycash=(obj)=>{         //set trip
+    this.normalPaycash=obj
+   }
 
    @action setridemodal=(obj)=>{         //set trip
     this.ridemodal=obj
    }
-
 
   @action setgetreqloader=(obj)=>{          
     this.getreqloader=obj 
@@ -141,6 +149,9 @@ constructor(){
           this.setar(0);
           this.setarrive(false)
           this.setrequest(false);
+          this.startride(false);
+          this.endride(false);
+       
           utils.ToastAndroid.ToastAndroid_SBC("Customer cancel this trip !")
          }
 
@@ -238,14 +249,26 @@ constructor(){
                if(req.status.length>0){
                  req.status.map((e,i,a)=>{
 
+                  if(e.status=="accepted"){
+                    this.setatime(e.date)
+                    this.setaccept(true)
+                  }
+                  
                     if(e.status=="arrived"){
                        this.setarvtime(e.date)
+                       this.setarrive(true)
                    }
-
-                   if(e.status=="accepted"){
-                    this.setatime(e.date)
+                
+                  if(e.status=="started"){
+                    this.setstartride(true)
                   }
 
+                  if(e.status=="ended"){
+                    this.setendride(true)
+                  }
+
+ 
+ 
                  })
                }
               

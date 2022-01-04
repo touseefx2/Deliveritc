@@ -139,9 +139,9 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   useEffect(() => {
     if(!accept){
-      setrequest(false);
-      setatime("");
-      setgro(false)
+       setrequest(false);
+        setatime("");
+       setgro(false)
        SocketOff()
     }
   }, [accept])
@@ -465,6 +465,10 @@ const UpdateUser=(location,suc,a)=>{
            }
  
 
+       }
+
+       if(!isInternet){
+         setgro(false)
        }
  
      }, [isInternet ])
