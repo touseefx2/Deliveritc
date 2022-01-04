@@ -918,7 +918,7 @@ const confirmCashSubmit=(c,ra)=>{
         style: "cancel"
       },
       { text: "Yes", onPress: () =>  {
-        alert(c)
+        alert(c,ra,cash)
         //  setl(true);
 
         //  if(trip.length>0){
@@ -951,7 +951,7 @@ const confirmCashSubmit=(c,ra)=>{
     setcashconfirmMV(true);
   }else
   {
-   confirmCashSubmit("","")
+   confirmCashSubmit("normal",0)
   }
 
   
@@ -1675,8 +1675,8 @@ onPress={()=>{onClickAccept()}}>
 }
 
 const renderCashConfirmModal=()=>{
-
-let ra= !cashG?(normalPaycash.toFixed()-cash):(cash-normalPaycash.toFixed())  //remaining amount
+let npc=normalPaycash!="---"?normalPaycash.toFixed():normalPaycash
+let ra= !cashG?(npc-cash):(cash-npc)  //remaining amount
 
 let uwta=30;  //user walet totoal amount
 
@@ -1717,7 +1717,7 @@ let uwta=30;  //user walet totoal amount
 
 <View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:30}}>
 <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"30%",lineHeight:20}}>Total Fare</Text> 
-<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"65%",textAlign:"right",lineHeight:20}}>PKR {normalPaycash.toFixed()}</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"65%",textAlign:"right",lineHeight:20}}>PKR {npc}</Text> 
 </View>
 <View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
 <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>Collected Cash</Text> 
@@ -1760,16 +1760,18 @@ let uwta=30;  //user walet totoal amount
 <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"55%",textAlign:"right",lineHeight:20}}>PKR {uwta+ra}</Text> 
 </View>
 </View>
- 
-</View>)}
 
-            <TouchableOpacity   onPress={()=>{confirmCashSubmit(checkBox?"addinuserwallet":"",ra)}} style={[styles.BottomButton,{width:"100%",marginTop:30}]}>
+<TouchableOpacity   onPress={()=>{confirmCashSubmit("addinuserwallet",ra)}} style={[styles.BottomButton,{width:"100%",marginTop:30}]}>
             <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
                     <View style={[styles.ButtonRight,{width:"100%"}]}>
                     <Text style={[styles.buttonText,{color:"white"}]}>Submit</Text> 
                      </View>
              </LinearGradient>
              </TouchableOpacity>
+ 
+</View>)}
+
+         
 
 </View>
  )}
@@ -1780,7 +1782,7 @@ let uwta=30;  //user walet totoal amount
 
 <View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:30}}>
 <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"30%",lineHeight:20}}>Total Fare</Text> 
-<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"65%",textAlign:"right",lineHeight:20}}>PKR {normalPaycash.toFixed()}</Text> 
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"65%",textAlign:"right",lineHeight:20}}>PKR {npc}</Text> 
 </View>
 <View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",alignItems:"center",marginTop:5}}>
 <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"grey",width:"40%",lineHeight:20}}>Collected Cash</Text> 
