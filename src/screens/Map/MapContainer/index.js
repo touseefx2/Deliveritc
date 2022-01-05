@@ -115,6 +115,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setnolpl(0);
     setwaitTime("f");
     setarvtime("");
+    setl(false)
     setar(0);
     setskip(false);
     setnormalPay(false)
@@ -269,7 +270,8 @@ if(sec>=wt){
           }
 
           if(response.data){
-          
+            let r=response.data[0]
+            setcw(r.balance)
             return;
            }
 
@@ -284,7 +286,7 @@ if(sec>=wt){
     }).catch((e) => {
       setcw(false)
       setll(false);
-      utils.AlertMessage("","Network request failed")
+       utils.AlertMessage("","Network request failed")
        console.error("getuser catch error : ", e)
       return;
     })
@@ -295,7 +297,8 @@ if(sec>=wt){
  if(checkBox){
 getcustomerWalletinfo();
  }else{
-setll(false)
+setll(false);
+setcw("f")
  }
   }, [checkBox])
 
@@ -428,7 +431,7 @@ useEffect(() => {
     // Do your stuff here
   })
   .catch(error => {
-          utils.AlertMessage("Fetch distance api error",error),   
+             utils.AlertMessage("Fetch distance api error","Network request failed"),   
             console.log("Problem occurred fetchdsistancematric : ",error);
   });
 }
@@ -955,8 +958,7 @@ return dot;
   
 const  onCashsubmit=(c,ra)=>{
 
-  console.log("cash : ",cash)
-  console.log("c : ",c,"ra : ",ra)
+  
 
     if(c=="normal"){
         setcashconfirmMV(false);
@@ -1092,14 +1094,13 @@ const  onCashsubmit=(c,ra)=>{
 
   const onTripRating=()=>{
 
-    setloader(true)
+    setl(true)
 	  let bodyData=   {rating:starCount}
 	  const header= authToken
-
-	
+ 
 	    db.api.apiCall("put",db.link.addTripRating+request._id ,bodyData,header)
 	     .then((response) => {
-	     setloader(false)
+	     setl(false)
 		  console.log("onTripRating response : " , response);
 	 
       if(response.msg=="Invalid Token"){
@@ -1120,7 +1121,7 @@ const  onCashsubmit=(c,ra)=>{
 	   }
  
    }).catch((e) => {
-	  setloader(false);
+	  setl(false);
 	  utilsS.AlertMessage("","Network request failed");
 	  console.error("onTripRating catch error : ", e)
 	 return;
@@ -1131,7 +1132,7 @@ const  onCashsubmit=(c,ra)=>{
   const onclickDoneRide=()=>{
     
     if(starCount>0){
-      if(generalmanager.internet){
+      if(isInternet){
         onTripRating();
       }else{
        utils.AlertMessage("","Please connect internet .")
@@ -1921,9 +1922,8 @@ let npc=normalPaycash
 let ra= !cashG?(npc-cash):(cash-npc)  //remaining amount
 
 let uwta=0;  //user walet totoal amount
-
 if(cw!=false && cw!=="f"){
-utwa=300
+  uwta=cw
 }
 
   return(
@@ -1983,7 +1983,7 @@ utwa=300
 <utils.vectorIcon.FontAwesome name={"circle"} color={"#0e47a1"}  size={15}/> 
   )}
  </TouchableOpacity>
- <TouchableOpacity onPress={()=>{if(isInternet){setcheckBox(!checkBox)}else{utils.AlertMessage("","Please connect internet")}}}style={{width:"92%"}}>
+ <TouchableOpacity onPress={()=>{if(isInternet){setcheckBox(!checkBox)}else{alert("","Please connect internet")}}}style={{width:"92%"}}>
  <Text  style={{fontSize:15,color:!checkBox?"silver":"black"}}>Add extra amount in user wallet</Text> 
  </TouchableOpacity>
 </View>
@@ -1991,7 +1991,7 @@ utwa=300
 {checkBox  &&(
 <View style={{marginTop:20}}>
 
-{cw!=="f" && cw!==false && !ll}{
+{cw!=="f" && cw!==false && !ll &&
 <View>
 <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
 <utils.vectorIcon.AntDesign name={"wallet"} color={"#0e47a1"}  size={28} style={{width:"10%"}}/> 
@@ -2019,14 +2019,14 @@ utwa=300
 </View>
 }
 
-{cw=="f" && ll}{
-  <View style={{width:"100%",marginTop:30,alignItems:"center",justifyContent:"center"}}>
-  <ActivityIndicator color='green' size={18} />
+{cw=="f" && ll&&
+  <View style={{width:"100%",alignItems:"center",justifyContent:"center"}}>
+  <ActivityIndicator color='green' size={20} />
   </View>
 }
  
-{cw==false && !ll}{
-  <View style={{width:"100%",marginTop:30,alignItems:"center",justifyContent:"center"}}>
+{cw==false && !ll &&
+  <View style={{width:"100%",alignItems:"center",justifyContent:"center"}}>
   <TouchableOpacity onPress={()=>{if(isInternet){getcustomerWalletinfo()}else{utils.AlertMessage("","Please connect internet")}}} >
  <Text  style={{fontSize:15,color:"red",textDecorationLine:"underline"}}>Retry</Text> 
  </TouchableOpacity>
@@ -2072,6 +2072,8 @@ utwa=300
 {checkBox&&(
 <View style={{marginTop:20}}>
 
+{cw!=="f" && cw!==false && !ll &&(
+  <View>
 <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
 <utils.vectorIcon.AntDesign name={"wallet"} color={"#0e47a1"}  size={28} style={{width:"10%"}}/> 
 <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:17,color:"#0e47a1",width:"88%",lineHeight:20,textTransform:"capitalize"}}>{request.customer.fullname}</Text> 
@@ -2102,12 +2104,27 @@ utwa=300
 )}
 
 </View>
+ </View>
+)}
 
 
+{cw=="f" && ll&&
+  <View style={{width:"100%",alignItems:"center",justifyContent:"center"}}>
+  <ActivityIndicator color='green' size={20} />
+  </View>
+}
+ 
+{cw==false && !ll &&
+  <View style={{width:"100%",alignItems:"center",justifyContent:"center"}}>
+  <TouchableOpacity onPress={()=>{if(isInternet){getcustomerWalletinfo()}else{utils.AlertMessage("","Please connect internet")}}} >
+ <Text  style={{fontSize:15,color:"red",textDecorationLine:"underline"}}>Retry</Text> 
+ </TouchableOpacity>
+  </View>
+}
+ 
 </View>)}
  
-
-
+ 
 </View>
  )}
 
@@ -2185,6 +2202,8 @@ utwa=300
     )
   }
  
+ 
+
   return(
   <SafeAreaView style={{flex:1}}>  
     

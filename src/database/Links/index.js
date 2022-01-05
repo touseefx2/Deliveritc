@@ -24,9 +24,6 @@ const paycashEqual="trip/paybill/"
 const paycashExtra="trip/paybill/addtodebit/"
 const paycashLess="trip/paybill/addtocredit/"
 
-
-const paycashLess="trip/paybill/addtocredit/"
-
 const getcustomerWalletinfo="transaction_history/getHistoryByUser?user="
 
 // const getAlbumsById = "customer/albums?customer_id=" //login cstmr buy albums
@@ -38,7 +35,7 @@ export  default link ={
     ,uploadFile,getCar,updateTerms
     ,getUserById,getTripsbyId,acceptTrip,arriveTrip,startTrip,endTrip,
     skipTrip,cancelTrip,getAvgRating,
-    paycashEqual,paycashExtra,paycashLess,addTripRating,getWalletinfo,getcustomerWalletinfo
+    paycashEqual,paycashExtra,paycashLess,addTripRating,getcustomerWalletinfo
 }
 
 
