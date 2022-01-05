@@ -1,5 +1,5 @@
 import React ,{useEffect,useRef,useState,useCallback} from 'react';
-import { StyleSheet,TouchableOpacity,View,Linking,SafeAreaView,Text,  ImageBackground,Dimensions,Image,Alert,ScrollView,TouchableWithoutFeedback} from 'react-native';
+import { StyleSheet,TouchableOpacity,View,Linking,SafeAreaView,Text,  ImageBackground,BackHandler,Image,Alert,ScrollView,TouchableWithoutFeedback} from 'react-native';
 import styles from './styles';
 import theme from "../../../themes/index"
 import utils from "../../../utils/index"
@@ -98,6 +98,53 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
  
   const mapRef = useRef();
    
+
+
+  useEffect(() => {
+    const subscription  = BackHandler.addEventListener('hardwareBackPress', handleBackButtonClick);
+   
+    return () => {
+    BackHandler.removeEventListener('hardwareBackPress', handleBackButtonClick);
+    subscription.remove(); 
+   }
+  
+  },[normalPay])
+  
+
+  function handleBackButtonClick() {
+
+    if (!props.navigation.isFocused()) {
+      return false;
+    }else{
+      if(!normalPay)
+      {
+      goBack()
+      }else{
+        clearallFields() 
+        utils.ToastAndroid.ToastAndroid_SB("Trip Complete :)");
+      }
+      return true;
+    }  
+  
+   
+  }
+
+  const goBack=()=>{
+    Alert.alert(
+      "Confirmation",
+      "Are you sure tou want to exit app ?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel"
+        },
+        { text: "OK", onPress: () => BackHandler.exitApp()}
+      ]
+    );
+  }
+ 
+
   const clearallFields=()=>{
     settripdetailmodal(false)
     setridemodal(false);
