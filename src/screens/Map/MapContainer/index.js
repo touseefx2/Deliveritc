@@ -907,6 +907,54 @@ return dot;
 //     // clearallFields()
 //   }
 
+const  onCashsubmit=(c,ra)=>{
+ 
+    // setl(true);
+console.log(c,ra)
+
+    if(c=="normal"){
+
+    }
+
+    // const bodyData={distance:d}
+    // const header=authToken;
+    // // method, path, body, header
+    // db.api.apiCall("put",db.link.endTrip+request._id,bodyData,header)
+    // .then((response) => {
+          
+    //        console.log("End trip response : " , response);
+    //        setl(false);
+
+    //       if(response.msg=="Invalid Token"){
+    //         utils.AlertMessage("", response.msg ) ;
+    //         onLogout();
+    //         return;
+    //         }
+  
+    //       if(response.success){
+    //         setendride(true);
+    //         setnormalPaycash(response.total_rent)
+    //           return;
+    //           }
+
+    //        if(!response.success){
+    //             utils.AlertMessage("",response.message)
+    //            return;
+    //            }
+   
+
+    //     return;
+    // }).catch((e) => {
+    //      setl(false);
+    //   //  utils.AlertMessage("","Network request failed");
+    //    console.error("End trip catch error : ", e)
+    //   return;
+    // })
+    
+
+  } 
+ 
+
 const confirmCashSubmit=(c,ra)=>{
   Alert.alert(
     "Confirmation",
@@ -918,7 +966,12 @@ const confirmCashSubmit=(c,ra)=>{
         style: "cancel"
       },
       { text: "Yes", onPress: () =>  {
-        alert(c,ra,cash)
+        if(isInternet){
+             onCashsubmit(c,ra)
+        }
+        else{
+          utils.AlertMessage("","Please connect internet")
+        }
         //  setl(true);
 
         //  if(trip.length>0){
