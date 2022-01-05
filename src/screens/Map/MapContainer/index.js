@@ -1069,12 +1069,19 @@ const  onCashsubmit=(c,ra)=>{
  }
 
   const onclickDoneRide=()=>{
-
-    if(generalmanager.internet){
-       onTripRating();
-     }else{
-      utils.AlertMessage("","Please connect internet .")
-     }
+    
+    if(starCount>0){
+      if(generalmanager.internet){
+        onTripRating();
+      }else{
+       utils.AlertMessage("","Please connect internet .")
+      }
+    }else{
+      clearallFields() 
+      utils.ToastAndroid.ToastAndroid_SB("Trip Complete :)");
+    }
+    
+   
     
     }
   
