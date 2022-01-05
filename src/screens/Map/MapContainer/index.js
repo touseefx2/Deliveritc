@@ -63,6 +63,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   const [tripdetailmodal,settripdetailmodal] = useState(false);
 
+  const [cash,setcash] = useState("");
   const [cashconfirmMV, setcashconfirmMV] = useState(false);
   const [cashG, setcashG] = useState(false);  // colctd cash i sgret or lower than  total rent amount
   const [checkBox, setcheckBox] = useState(false);  // colctd cash i sgret or lower than  total rent amount
@@ -89,7 +90,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   const [starCount,setstarCount] = useState(0);
  
-  const [cash,setcash] = useState("");
+ 
  
   const mapRef = useRef();
    
@@ -97,7 +98,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     settripdetailmodal(false)
     setridemodal(false);
     setaccept(false);
-     setrequest(false)
+    setrequest(false)
     setarrive(false);
     setstartride(false);
     setendride(false);
@@ -120,6 +121,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setcashconfirmMV(false);
     setcashG(false);
     setcheckBox(false)
+    setcash("")
     // setcash("");
     // setstarCount(0);
 
