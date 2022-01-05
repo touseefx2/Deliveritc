@@ -245,6 +245,7 @@ constructor(){
     
               this.getAvgRate(req.customer._id)
               this.setrequest(req);
+              this.setnormalPaycash(req.rent)
 
                if(req.status.length>0){
                  req.status.map((e,i,a)=>{

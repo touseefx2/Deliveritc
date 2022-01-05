@@ -312,6 +312,7 @@ useEffect(() => {
       }
 
       if(skip || accept){
+        setp(0)
         clearInterval(interval);
       }
 
@@ -556,7 +557,7 @@ const onClickEnd=(d)=>{
   
           if(response.success){
             setendride(true);
-            setnormalPaycash(response.total_rent)
+            setnormalPaycash(response.data.rent)
               return;
               }
 
