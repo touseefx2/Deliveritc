@@ -19,6 +19,11 @@ const startTrip="trip/startTrip/"
 const endTrip="trip/endTrip/"
 const getAvgRating="user/getAverageRating?user="
 const cancelTrip="trip/cancelTrip/"
+const addTripRating="trip/rateCustomer/"
+const paycashEqual="trip/paybill/"
+const paycashExtra="trip/paybill/addtodebit/"
+const paycashLess="trip/paybill/addtocredit/"
+
 // const getAlbumsById = "customer/albums?customer_id=" //login cstmr buy albums
  
 
@@ -27,4 +32,8 @@ export  default link ={
     links,login,signup,updateUser
     ,uploadFile,getCar,updateTerms
     ,getUserById,getTripsbyId,acceptTrip,arriveTrip,startTrip,endTrip,
-    skipTrip,cancelTrip,getAvgRating}
+    skipTrip,cancelTrip,getAvgRating,
+    paycashEqual,paycashExtra,paycashLess,addTripRating
+}
+
+

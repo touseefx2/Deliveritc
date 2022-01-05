@@ -27,10 +27,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
  
 
    function MapContainer (props)   {
-
-  
-
-
+ 
     //before arrive after accept
     let ctnotcuttimeba=10  //2min or 120 sec no cut charges if captain cancel trip before 2 min so not cut charges otherwise cut charges
     let ctcfba=40 //amount paid before arrive after then 2 min in after acpt
@@ -893,68 +890,192 @@ return dot;
     );
  
   }
- 
-//   const clickFinish=()=>{
-//     // if(trip.length>0){
-//     //   trip.map((e,i,a)=>{
-//     //   if(e.id==request.id){
-//     //     trip[i].finish=true //yani complete ho gya status
-//     //     trip[i].userrate= starCount
-//     //     }
-//     //   })
-//     // }
-//     // changerequest("finish","","","","","","",starCount);
-//     // clearallFields()
-//   }
-
+  
 const  onCashsubmit=(c,ra)=>{
- 
-    // setl(true);
-console.log(c,ra)
+
+  console.log("cash : ",cash)
+  console.log("c : ",c,"ra : ",ra)
 
     if(c=="normal"){
-
-    }
-
-    // const bodyData={distance:d}
-    // const header=authToken;
-    // // method, path, body, header
-    // db.api.apiCall("put",db.link.endTrip+request._id,bodyData,header)
-    // .then((response) => {
+        setcashconfirmMV(false);
+        setl(true);
+       
+       const bodyData={amt_paid:normalPaycash}
+       const header=authToken;
+ 
+    db.api.apiCall("put",db.link.paycashEqual+request._id,bodyData,header)
+    .then((response) => {
           
-    //        console.log("End trip response : " , response);
-    //        setl(false);
+           console.log("paycashEqual response : " , response);
+           setl(false);
 
-    //       if(response.msg=="Invalid Token"){
-    //         utils.AlertMessage("", response.msg ) ;
-    //         onLogout();
-    //         return;
-    //         }
+          if(response.msg=="Invalid Token"){
+            utils.AlertMessage("", response.msg ) ;
+            onLogout();
+            return;
+            }
   
-    //       if(response.success){
-    //         setendride(true);
-    //         setnormalPaycash(response.total_rent)
-    //           return;
-    //           }
+          if(response.success){
+            setnormalPay(true);
+            utils.ToastAndroid.ToastAndroid_SB("Done")
+             return;
+             }
 
-    //        if(!response.success){
-    //             utils.AlertMessage("",response.message)
-    //            return;
-    //            }
+           if(!response.success){
+                utils.AlertMessage("",response.message)
+               return;
+               }
    
 
-    //     return;
-    // }).catch((e) => {
-    //      setl(false);
-    //   //  utils.AlertMessage("","Network request failed");
-    //    console.error("End trip catch error : ", e)
-    //   return;
-    // })
-    
-
-  } 
  
+    }).catch((e) => {
+         setl(false);
+      //  utils.AlertMessage("","Network request failed");
+       console.error("paycashEqual catch error : ", e)
+      return;
+    })
 
+
+      return;
+    }
+
+    if(c=="cutt"){
+       setcashconfirmMV(false);
+       setl(true);
+       
+       const bodyData={amt_paid:normalPaycash,credit:ra}
+       const header=authToken;
+ 
+    db.api.apiCall("put",db.link.paycashLess+request._id,bodyData,header)
+    .then((response) => {
+          
+           console.log("paycashLess response : " , response);
+           setl(false);
+
+          if(response.msg=="Invalid Token"){
+            utils.AlertMessage("", response.msg ) ;
+            onLogout();
+            return;
+            }
+  
+          if(response.success){
+           setnormalPay(true)
+            utils.ToastAndroid.ToastAndroid_SB("Done")
+             return;
+             }
+
+           if(!response.success){
+                utils.AlertMessage("",response.message)
+               return;
+               }
+   
+
+ 
+    }).catch((e) => {
+         setl(false);
+      //  utils.AlertMessage("","Network request failed");
+       console.error("paycashLess catch error : ", e)
+      return;
+    })
+
+
+      return;
+    }
+
+
+    if(c=="add"){
+       setcashconfirmMV(false);
+       setl(true);
+       
+       const bodyData={amt_paid:normalPaycash,debit:ra}
+       const header=authToken;
+ 
+    db.api.apiCall("put",db.link.paycashExtra+request._id,bodyData,header)
+    .then((response) => {
+          
+           console.log("paycashExtra response : " , response);
+           setl(false);
+
+          if(response.msg=="Invalid Token"){
+            utils.AlertMessage("", response.msg ) ;
+            onLogout();
+            return;
+            }
+  
+          if(response.success){
+           setnormalPay(true)
+            utils.ToastAndroid.ToastAndroid_SB("Done")
+             return;
+             }
+
+           if(!response.success){
+                utils.AlertMessage("",response.message)
+               return;
+               }
+   
+
+ 
+    }).catch((e) => {
+         setl(false);
+      //  utils.AlertMessage("","Network request failed");
+       console.error("paycashExtra catch error : ", e)
+      return;
+    })
+
+
+      return;
+    }
+  
+  } 
+
+  const onTripRating=()=>{
+
+    setloader(true)
+	  let bodyData=   {rating:starCount}
+	  const header= authToken
+
+	
+	    db.api.apiCall("put",db.link.addTripRating+request._id ,bodyData,header)
+	     .then((response) => {
+	     setloader(false)
+		  console.log("onTripRating response : " , response);
+	 
+      if(response.msg=="Invalid Token"){
+        utils.AlertMessage("", response.msg ) ;
+        onLogout();
+        return;
+        }
+   
+		  if(response.success){
+			  clearallFields() 
+        utils.ToastAndroid.ToastAndroid_SB("Trip Complete :)");
+			  return;
+		  }
+ 
+		  if(!response.success){
+		  utilsS.AlertMessage("",response.message);
+		   return;
+	   }
+ 
+   }).catch((e) => {
+	  setloader(false);
+	  utilsS.AlertMessage("","Network request failed");
+	  console.error("onTripRating catch error : ", e)
+	 return;
+   })
+ 
+ }
+
+  const onclickDoneRide=()=>{
+
+    if(generalmanager.internet){
+       onTripRating();
+     }else{
+      utils.AlertMessage("","Please connect internet .")
+     }
+    
+    }
+  
 const confirmCashSubmit=(c,ra)=>{
   Alert.alert(
     "Confirmation",
@@ -1009,7 +1130,6 @@ const confirmCashSubmit=(c,ra)=>{
 
   
  }
-
  
  const renderIcon = (props) => (
  
@@ -1017,8 +1137,7 @@ const confirmCashSubmit=(c,ra)=>{
    <utils.vectorIcon.Entypo name="cross" size={22} color="gray" />
   </TouchableWithoutFeedback>
 );
-
-
+ 
 const renderShowLocation=()=>{
 
   //when acpt  request
@@ -1341,7 +1460,7 @@ CANCEL JOB
        </theme.Text>
  
       <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:22,lineHeight:30,fontFamily:theme.fonts.fontMedium,color:"#383838",textAlign:"right",width:"65%", }}>
-              PKR {normalPaycash!="---"?normalPaycash.toFixed():normalPaycash}
+              PKR {normalPaycash}
       </theme.Text>
   
 
@@ -1385,56 +1504,56 @@ CANCEL JOB
   //  done submit cash normal pay true
     if(c==5){
     return(
-null
-      // <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10}}>
+ 
+      <View style={{position:"absolute",bottom:0,width:wp("95%"),alignSelf:"center",padding:10}}>
       
  
-      //   <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5,flexDirection:"row"}}>
+        <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5,flexDirection:"row"}}>
        
-      //  <View style={{marginTop:-4}}>
-      //  <utils.vectorIcon.MaterialIcons name="payments" color="black" size={30} />
-      //  </View>
+       <View style={{marginTop:-4}}>
+       <utils.vectorIcon.MaterialIcons name="payments" color="black" size={30} />
+       </View>
        
-      //  <View style={{marginLeft:10,width:"85%"}}> 
+       <View style={{marginLeft:10,width:"85%"}}> 
       
-      //  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
-      //   Route eranings
-      //  </theme.Text>
+       <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
+        Route eranings
+       </theme.Text>
       
-      //  <theme.Text  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",marginTop:10}}>
-      //   You can view yours earnings in captain portal.
-      //  </theme.Text>
+       <theme.Text  style={{fontSize:16,fontFamily:theme.fonts.fontMedium,color:"gray",marginTop:10}}>
+        You can view yours earnings in captain portal.
+       </theme.Text>
       
-      //  </View>
+       </View>
        
-      // </View>
+      </View>
       
-      // <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
-      //  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:22,fontFamily:theme.fonts.fontMedium,color:"black",textTransform:"capitalize",lineHeight:25}}>
-      //   Rate {request.name}
-      //  </theme.Text>
+      <View style={{backgroundColor:"white",width:"100%",borderRadius:4,padding:10,marginBottom:10,elevation:5}}>
+       <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:22,fontFamily:theme.fonts.fontMedium,color:"black",textTransform:"capitalize",lineHeight:25}}>
+        Rate {request.customer.fullnmae}
+       </theme.Text>
       
-      //  <StarRating
-      //          containerStyle={{marginVertical:15}}
-      //         disabled={false}
-      //         maxStars={5}
-      //         starStyle={{borderWidth:0}}
-      //         fullStarColor={theme.color.buttonLinerGC1}
-      //         rating={starCount}
-      //         selectedStar={(rating) => setstarCount(rating)}
-      //       />
+       <StarRating
+               containerStyle={{marginVertical:15}}
+              disabled={false}
+              maxStars={5}
+              starStyle={{borderWidth:0}}
+              fullStarColor={theme.color.buttonLinerGC1}
+              rating={starCount}
+              selectedStar={(rating) => setstarCount(rating)}
+            />
+
+      </View>
       
-      // </View>
-      
-      //       <TouchableOpacity onPress={()=>{clickFinish()}} style={[styles.BottomButton,{width:"100%"}]}>
-      //       <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
-      //               <View style={[styles.ButtonRight,{width:"100%"}]}>
-      //               <Text style={styles.buttonText}>{msg}</Text> 
-      //                </View>
-      //        </LinearGradient>
-      //        </TouchableOpacity>
+            <TouchableOpacity onPress={()=>{onclickDoneRide()}} style={[styles.BottomButton,{width:"100%"}]}>
+            <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
+                    <View style={[styles.ButtonRight,{width:"100%"}]}>
+                    <Text style={styles.buttonText}>{msg}</Text> 
+                     </View>
+             </LinearGradient>
+             </TouchableOpacity>
    
-      // </View>
+      </View>
       
           )
  
@@ -1728,7 +1847,8 @@ onPress={()=>{onClickAccept()}}>
 }
 
 const renderCashConfirmModal=()=>{
-let npc=normalPaycash!="---"?normalPaycash.toFixed():normalPaycash
+// let npc=normalPaycash!="---"?normalPaycash.toFixed():normalPaycash
+let npc=normalPaycash
 let ra= !cashG?(npc-cash):(cash-npc)  //remaining amount
 
 let uwta=30;  //user walet totoal amount
@@ -1814,7 +1934,7 @@ let uwta=30;  //user walet totoal amount
 </View>
 </View>
 
-<TouchableOpacity   onPress={()=>{confirmCashSubmit("addinuserwallet",ra)}} style={[styles.BottomButton,{width:"100%",marginTop:30}]}>
+<TouchableOpacity   onPress={()=>{confirmCashSubmit("add",ra)}} style={[styles.BottomButton,{width:"100%",marginTop:30}]}>
             <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
                     <View style={[styles.ButtonRight,{width:"100%"}]}>
                     <Text style={[styles.buttonText,{color:"white"}]}>Submit</Text> 
@@ -1880,7 +2000,7 @@ let uwta=30;  //user walet totoal amount
 <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:15,color:"black",width:"55%",textAlign:"right",lineHeight:20}}>PKR {uwta-ra}</Text> 
 </View>
 
-            <TouchableOpacity   onPress={()=>{confirmCashSubmit("cutfromuserwallet",ra)}} style={[styles.BottomButton,{width:"100%",marginTop:30}]}>
+            <TouchableOpacity   onPress={()=>{confirmCashSubmit("cutt",ra)}} style={[styles.BottomButton,{width:"100%",marginTop:30}]}>
             <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
                     <View style={[styles.ButtonRight,{width:"100%"}]}>
                     <Text style={[styles.buttonText,{color:"white"}]}>Submit</Text> 
@@ -1975,8 +2095,6 @@ let uwta=30;  //user walet totoal amount
     </Marker>
     )
   }
-    console.log("p : ",p)
-
  
   return(
   <SafeAreaView style={{flex:1}}>  
