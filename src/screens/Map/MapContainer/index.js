@@ -19,6 +19,7 @@ import {Input } from '@ui-kitten/components';
 import { tr } from 'date-fns/locale';
 import db from "../../../database/index"
 import  Modal   from 'react-native-modal';
+import { ActivityIndicator } from 'react-native-paper';
 
 
 const gapikey="AIzaSyAJeMjKbTTRvoZJe0YoJc48VhaqbtoTmug"
@@ -55,7 +56,10 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
   const [loader, setloader] = useState(false); //loading indctr in button
   const [l, setl] = useState(false); //loading 
- 
+
+  const [ll, setll] = useState(false); //loading geting user walet
+  const [cw, setcw] = useState("f"); //customer wallet info
+
   const [search,setsearch] = useState(""); //destntn adress st from google places
   const [showLoc,setshowLoc] = useState(false); //destntn adress st from google places
 
@@ -115,6 +119,8 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setskip(false);
     setnormalPay(false)
     setstartride(false);
+    setll(false);
+    setcw("f")
     setendride(false);
     setnormalPay(false)
     setnormalPaycash("---");
@@ -239,6 +245,59 @@ if(sec>=wt){
        setmr(false)
     }
   }, [mr,cl])
+
+  const getcustomerWalletinfo=()=>{
+
+    setll(true);
+    setcw("f")
+    const bodyData=false
+    const header=authToken;
+    const cid=request.customer._id
+    
+
+    // method, path, body, header
+    db.api.apiCall("get",db.link.getcustomerWalletinfo+cid,bodyData,header)
+    .then((response) => {
+         setll(false)
+         console.log("getcustomerWalletinforesponse : " , response);
+ 
+
+         if(response.msg=="Invalid Token"){
+          utils.AlertMessage("", response.msg ) ;
+          onLogout();
+          return;
+          }
+
+          if(response.data){
+          
+            return;
+           }
+
+         if(!response.data){
+           setcw(false)
+           utils.AlertMessage("", response.message ) ;
+          return;
+         }
+    
+        
+      
+    }).catch((e) => {
+      setcw(false)
+      setll(false);
+      utils.AlertMessage("","Network request failed")
+       console.error("getuser catch error : ", e)
+      return;
+    })
+
+  }
+
+  useEffect(() => {
+ if(checkBox){
+getcustomerWalletinfo();
+ }else{
+setll(false)
+ }
+  }, [checkBox])
 
   useEffect(() => {
    if(cl!=""&&startride&&request){
@@ -1861,7 +1920,11 @@ const renderCashConfirmModal=()=>{
 let npc=normalPaycash
 let ra= !cashG?(npc-cash):(cash-npc)  //remaining amount
 
-let uwta=30;  //user walet totoal amount
+let uwta=0;  //user walet totoal amount
+
+if(cw!=false && cw!=="f"){
+utwa=300
+}
 
   return(
     <Modal 
@@ -1913,21 +1976,23 @@ let uwta=30;  //user walet totoal amount
 
 
 <View style={{flexDirection:"row",width:"100%",marginTop:30,justifyContent:"space-between"}}>
- <TouchableOpacity onPress={()=>setcheckBox(!checkBox)} style={{width:"5%",top:5}}> 
+ <TouchableOpacity onPress={()=>{if(isInternet){setcheckBox(!checkBox)}else{utils.AlertMessage("","Please connect internet")}}} style={{width:"5%",top:5}}> 
 {!checkBox ?(
   <utils.vectorIcon.Entypo name={"circle"} color={"silver"}  size={15}/> 
   ):(
 <utils.vectorIcon.FontAwesome name={"circle"} color={"#0e47a1"}  size={15}/> 
   )}
  </TouchableOpacity>
- <TouchableOpacity onPress={()=>setcheckBox(!checkBox)} style={{width:"92%"}}>
+ <TouchableOpacity onPress={()=>{if(isInternet){setcheckBox(!checkBox)}else{utils.AlertMessage("","Please connect internet")}}}style={{width:"92%"}}>
  <Text  style={{fontSize:15,color:!checkBox?"silver":"black"}}>Add extra amount in user wallet</Text> 
  </TouchableOpacity>
 </View>
 
-{checkBox&&(
+{checkBox  &&(
 <View style={{marginTop:20}}>
 
+{cw!=="f" && cw!==false && !ll}{
+<View>
 <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
 <utils.vectorIcon.AntDesign name={"wallet"} color={"#0e47a1"}  size={28} style={{width:"10%"}}/> 
 <Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:17,color:"#0e47a1",width:"88%",lineHeight:20,textTransform:"capitalize"}}>{request.customer.fullname}</Text> 
@@ -1951,11 +2016,25 @@ let uwta=30;  //user walet totoal amount
                      </View>
              </LinearGradient>
              </TouchableOpacity>
+</View>
+}
+
+{cw=="f" && ll}{
+  <View style={{width:"100%",marginTop:30,alignItems:"center",justifyContent:"center"}}>
+  <ActivityIndicator color='green' size={18} />
+  </View>
+}
+ 
+{cw==false && !ll}{
+  <View style={{width:"100%",marginTop:30,alignItems:"center",justifyContent:"center"}}>
+  <TouchableOpacity onPress={()=>{if(isInternet){getcustomerWalletinfo()}else{utils.AlertMessage("","Please connect internet")}}} >
+ <Text  style={{fontSize:15,color:"red",textDecorationLine:"underline"}}>Retry</Text> 
+ </TouchableOpacity>
+  </View>
+}
  
 </View>)}
-
-         
-
+ 
 </View>
  )}
 
@@ -1978,14 +2057,14 @@ let uwta=30;  //user walet totoal amount
 
 
 <View style={{flexDirection:"row",width:"100%",justifyContent:"space-between",marginTop:30}}>
- <TouchableOpacity onPress={()=>setcheckBox(!checkBox)} style={{width:"5%",top:5}}> 
+ <TouchableOpacity onPress={()=>{if(isInternet){setcheckBox(!checkBox)}else{utils.AlertMessage("","Please connect internet")}}} style={{width:"5%",top:5}}> 
 {!checkBox ?(
   <utils.vectorIcon.Entypo name={"circle"} color={"silver"}  size={15}/> 
   ):(
 <utils.vectorIcon.FontAwesome name={"circle"} color={"#0e47a1"}  size={15}/> 
   )}
  </TouchableOpacity>
- <TouchableOpacity onPress={()=>setcheckBox(!checkBox)} style={{width:"92%"}}>
+ <TouchableOpacity onPress={()=>{if(isInternet){setcheckBox(!checkBox)}else{utils.AlertMessage("","Please connect internet")}}} style={{width:"92%"}}>
  <Text  style={{fontSize:15,color:!checkBox?"silver":"black"}}>Cut remaining amount from user wallet</Text> 
  </TouchableOpacity>
 </View>
