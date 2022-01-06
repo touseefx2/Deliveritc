@@ -1,5 +1,5 @@
 import React ,{useEffect,useRef,useState,useCallback} from 'react';
-import { StyleSheet,TouchableOpacity,View,Linking,SafeAreaView,Text,  ImageBackground,BackHandler,Image,Alert,ScrollView,TouchableWithoutFeedback} from 'react-native';
+import { StyleSheet,TouchableOpacity,View,Linking,SafeAreaView,Text,ImageBackground,BackHandler,Image,Alert,ScrollView,TouchableWithoutFeedback} from 'react-native';
 import styles from './styles';
 import theme from "../../../themes/index"
 import utils from "../../../utils/index"
@@ -16,14 +16,10 @@ import CountDown from 'react-native-countdown-component';
 import moment from "moment";
 import StarRating from 'react-native-star-rating';
 import {Input } from '@ui-kitten/components';
-import { tr } from 'date-fns/locale';
 import db from "../../../database/index"
-// import  Modal as modall  from 'react-native-modal';
+import  Modal  from 'react-native-modal';
 import { ActivityIndicator } from 'react-native-paper';
-import dependencies from '../../../../dependencies';
-import  modal  from dependencies.modal;
-
-
+ 
 
 const gapikey="AIzaSyAJeMjKbTTRvoZJe0YoJc48VhaqbtoTmug"
  
@@ -1847,10 +1843,17 @@ CANCEL JOB
     "requestride")
     
     return(
-      <modal
-      animationType='fade'
-      transparent={true}
-      visible={ridemodal}>
+      <Modal
+      isVisible={ridemodal}
+      backdropOpacity={0.7}
+      animationIn="fadeInUp"
+      animationOut="fadeOutDown"
+      animationInTiming={110}
+      animationOutTiming={100}
+      backdropTransitionInTiming={100}
+      backdropTransitionOutTiming={100}
+      onRequestClose={() => { console.log("c")}}
+   >
   
   <View style={{ flex: 1, backgroundColor:'rgba(0,0,0.2,0.9)', justifyContent: 'center', alignItems: 'center' }}>
     
@@ -1962,7 +1965,7 @@ onPress={()=>{onClickAccept()}}>
 
       </View>
   
-    </modal>
+    </Modal>
     )
 }
 
