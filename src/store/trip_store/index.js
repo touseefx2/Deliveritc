@@ -188,7 +188,7 @@ constructor(){
              }
     
              if(response.data){
-           this.setar(response.data.ratingAvg)
+           this.setar(response.data[0].ratingAvg)
              }
           
              return;

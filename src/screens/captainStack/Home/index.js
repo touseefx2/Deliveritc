@@ -18,11 +18,9 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
  function Home (props)   {
 
-  const socket = io("http://192.168.10.16:3001");
-
   const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
   const {cars,setCars} =  props.carStore;
-  const {setrequest,accept,request,getReqById,setatime,setaccept,getreqloader,setgetreqloader,gro,setgro} = props.tripStore;
+  const {setrequest,accept,request,getReqById,setatime,setaccept,getreqloader,setgetreqloader,gro,setgro,endride} = props.tripStore;
   const {setLocation,isLocation,isInternet} = props.generalStore;
   const [loaderT,setloaderT]=useState(false);
   
@@ -91,28 +89,18 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
 	  }
  
+    const socket = io("http://192.168.10.9:3001");
     const SocketOn=()=>{
       socket.on("connect", () => {
         console.log(`"Socket : I'm connected with the back-end`);
         });
     }
-
     const SocketOff=()=>{
+      console.log("Socket off");
         socket.emit("stop_sharing_location",{socket:socket.id});
     }
-
-    useEffect(() => {
-      SocketOn();
-      socket.emit("receive_location_from_captain", {
-        id: socket.id,
-        user_id: user._id,
-        location: {
-          type: "Point",
-          coordinates: [111, 1212],
-        },
-      });
-    }, [ ])
-
+ 
+   
   useEffect(() => {
     if(refresh){
       if(isInternet){
@@ -121,13 +109,13 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
       getCar();getUser();skipTrip()
 
       if(cl!=""){
-        const bodyData={
-          location:{
-          type:"Point",
-          coordinates: [cl.longitude,cl.latitude]  //long , lat
-          }
-          } 
-          UpdateUser(bodyData,false)
+       
+          const bodyData={
+            type:"Point",
+            coordinates: [cl.longitude,cl.latitude]  //long , lat
+        }
+           
+          UpdateUser(bodyData,false,false,false)
       }
 
 
@@ -150,21 +138,31 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   }, [request,isInternet])
 
   useEffect(() => {
+    
     if(!accept){
-       setrequest(false);
+        setrequest(false);
         setatime("");
        setgro(false)
-       SocketOff()
+    
     }
   }, [accept])
 
+  useEffect(() => {
+    if(accept&&isInternet&&!endride){
+      SocketOn()
+    }
+    if(!accept||!isInternet||!request || endride){
+       SocketOff()
+    }
+  }, [accept,isInternet,endride,request])
+ 
+ 
   useEffect(() => {
     
      if(accept && cl!=""){
        if(isInternet  && !gro){
 
         if(request!=false){
-           SocketOn()
            setgetreqloader(true)
            getReqById(request._id,"check");
           }
@@ -212,8 +210,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     watchID= Geolocation.watchPosition((position) => 
    {
 setloaderT(false);
-
-  
+ 
   const r= 
   {
   latitude: position.coords.latitude ,
@@ -233,7 +230,7 @@ setloaderT(false);
       //  maximumAge: 3000,
       //  timeout:30000,
         enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  ,
-        distanceFilter:15,
+        distanceFilter:1,
      
    }
    )
@@ -244,14 +241,12 @@ setloaderT(false);
    if(cl!="" && isInternet ){
      
     const bodyData={
-      location:{
         type:"Point",
         coordinates: [cl.longitude,cl.latitude]  //long , lat
-      }
     }
-UpdateUser(bodyData,false,accept)  
+UpdateUser(bodyData,false,accept,endride)  
    }
- }, [cl,accept,isInternet])
+ }, [cl,accept,endride,isInternet])
 
  const onLogout=()=>{
   setCars(false) 
@@ -306,15 +301,15 @@ setloaderT(false);
  
 }
 
-const UpdateUser=(location,suc,a)=>{
+const UpdateUser=(location,suc,a,e)=>{
 
   
   	//update user
 	  let uid= user._id
-	  const bodyData= location
+	  const bodyData= {location:location}
 	  const header= authToken;
  
-    // if(!a){
+    if(!a || e){
 	  // method, path, body, header
 	  db.api.apiCall("put",db.link.updateUser+uid,bodyData,header)
 	  .then((response) => {
@@ -353,16 +348,14 @@ const UpdateUser=(location,suc,a)=>{
 		       console.error("Update user location catch error : ", e)
 	        	return;
 	  })
-    // }else{
-
-    //    socket.emit("receive_location_from_captain", {
-    //     // longitude: longitude,
-    //     // latitude: latitude,
-    //     id: socket.id,
-    //     user_id: uid,
-    //     location:bodyData
-    //   });
-    // }
+    }else if(a&&!e){
+      console.log("send captn  loc to socket : ",location)
+       socket.emit("receive_location_from_captain", {
+        id: socket.id,
+        user_id: uid,
+        location:location
+      });
+    }
 
 	
 		}
@@ -581,8 +574,7 @@ const UpdateUser=(location,suc,a)=>{
     </Modal>
     )
   }
-  
-   
+ 
 return(
  <NativeBaseProvider>
 {!loaderT && renderServerError()}

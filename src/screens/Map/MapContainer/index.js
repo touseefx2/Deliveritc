@@ -18,7 +18,7 @@ import StarRating from 'react-native-star-rating';
 import {Input } from '@ui-kitten/components';
 import db from "../../../database/index"
 import  Modal  from 'react-native-modal';
-import { ActivityIndicator } from 'react-native-paper';
+import { ActivityIndicator, TextInput } from 'react-native-paper';
  
 
 const gapikey="AIzaSyAJeMjKbTTRvoZJe0YoJc48VhaqbtoTmug"
@@ -66,7 +66,8 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   const [tripdetailmodal,settripdetailmodal] = useState(false);
 
-  const [cash,setcash] = useState("");
+  const [csh,setcsh] = useState("");
+  const [cash,setcash] = useState(0);
   const [cashconfirmMV, setcashconfirmMV] = useState(false);
   const [cashG, setcashG] = useState(false);  // colctd cash i sgret or lower than  total rent amount
   const [checkBox, setcheckBox] = useState(false);  // colctd cash i sgret or lower than  total rent amount
@@ -350,7 +351,7 @@ setcw("f")
 
   useEffect(() => {
    if(cl!=""&&startride&&request){
-         
+ 
     fetchDistanceBetweenPointsOnline(
       cl.latitude,
       cl.longitude,
@@ -435,51 +436,55 @@ useEffect(() => {
 
 
   const fetchDistanceBetweenPointsOnline = (lat1, lng1, lat2, lng2,c) => {  
-     
-    var urlToFetchDistance = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='+lat1+','+lng1+'&destinations='+lat2+'%2C'+lng2+'&key='+gapikey;
-    fetch(urlToFetchDistance)
-             .then(res => {
-             return res.json()
-  })
-  .then(res => {
-      
-          if(res){
-
-          
-              var distanceString = res.rows[0].elements[0].distance.text;
-              var timeString = res.rows[0].elements[0].duration.text;
-              var timeSecond = res.rows[0].elements[0].duration.value;
-              let s=timeSecond
-              var travelTime = moment(new Date()).add(s, 'seconds').format('h : mm A')
-
-            if(c=="requestride"){
-              // setdcp(distanceString)
-              settcp(timeString)
-            }
-            else if(c=="startride"){
-            
-              setdpd(distanceString)
-              settpd(travelTime)
    
-                    }
-           else if(c=="endride"){
-
-            let distanceInMeter= res.rows[0].elements[0].distance.value;  //in meter
-            let distanceInKm= distanceInMeter/1000;  //in meter to km
-            console.log("pickup se captn k cl ka distance in endride  ",distanceInKm)
-
-             onClickEnd(distanceInKm);
-                     }
-
-          }
-            
-            // return distanceString;
-    // Do your stuff here
-  })
-  .catch(error => {
-             utils.AlertMessage("Fetch distance api error","Network request failed"),   
-            console.log("Problem occurred fetchdsistancematric : ",error);
-  });
+    if(isInternet){
+      var urlToFetchDistance = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='+lat1+','+lng1+'&destinations='+lat2+'%2C'+lng2+'&key='+gapikey;
+      fetch(urlToFetchDistance)
+               .then(res => {
+               return res.json()
+    })
+    .then(res => {
+        
+            if(res){
+   
+                var distanceString = res.rows[0].elements[0].distance.text;
+                var timeString = res.rows[0].elements[0].duration.text;
+                var timeSecond = res.rows[0].elements[0].duration.value;
+                let s=timeSecond
+                var travelTime = moment(new Date()).add(s, 'seconds').format('h : mm A')
+  
+              if(c=="requestride"){
+                // setdcp(distanceString)
+                settcp(timeString)
+              }
+              else if(c=="startride"){
+              
+                setdpd(distanceString)
+                settpd(travelTime)
+     
+                      }
+             else if(c=="endride"){
+  
+              let distanceInMeter= res.rows[0].elements[0].distance.value;  //in meter
+              let distanceInKm= distanceInMeter/1000;  //in meter to km
+              console.log("pickup se captn k cl ka distance in endride  ",distanceInKm)
+  
+               onClickEnd(distanceInKm);
+                       }
+  
+            }
+              
+              // return distanceString;
+      // Do your stuff here
+    })
+    .catch(error => {
+               utils.AlertMessage("Fetch distance api error","Network request failed"),   
+              console.log("Problem occurred fetchdsistancematric : ",error);
+    });
+    }else{
+      utils.AlertMessage("","Please connect internet !")
+    }
+  
 }
  
 const onclickSkip=()=>{
@@ -1231,18 +1236,24 @@ const confirmCashSubmit=(c,ra)=>{
 }
 
  const  clickCashSubmit=()=>{
-   let npc=normalPaycash.toFixed()
- 
+
+ if(csh==""){
+   utils.AlertMessage("","Please enter amont")
+ }else{
+  let npc=normalPaycash.toFixed()
   if(cash<npc){
-      setcashG(false)
-      setcashconfirmMV(true)
-  }else if(cash>npc){
-    setcashG(true)
-    setcashconfirmMV(true);
-  }else
-  {
-   confirmCashSubmit("normal",0)
-  }
+    setcashG(false)
+    setcashconfirmMV(true)
+}else if(cash>npc){
+  setcashG(true)
+  setcashconfirmMV(true);
+}else
+{
+ confirmCashSubmit("normal",0)
+}
+
+
+ }
 
   
  }
@@ -1589,23 +1600,22 @@ CANCEL JOB
        <theme.Text   style={{fontSize:20,fontFamily:theme.fonts.fontMedium,color:"black",lineHeight:25}}>
        Enter amount collected
        </theme.Text>
-   
+ 
       <Input
-      value={cash}
+      value={csh}
       keyboardType="number-pad"
-      label=''
-      placeholder='0'
-      accessoryRight={cash!=""?renderIcon:""}
-      onChangeText={nextValue => setcash(parseInt(nextValue.replace(/\D/gm, '')))}
+      placeholder={"0"}
+      accessoryRight={csh!=""?renderIcon:null}
+      onChangeText={nextValue =>{setcsh(nextValue.replace(/\D/gm, ''));setcash(parseInt(nextValue))}}
     />
      
       
       </View>
       
-            <TouchableOpacity disabled={cash==""?true:false} onPress={()=>{clickCashSubmit()}} style={[styles.BottomButton,{width:"100%"}]}>
+            <TouchableOpacity disabled={csh==""?true:false} onPress={()=>{clickCashSubmit()}} style={[styles.BottomButton,{width:"100%"}]}>
             <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
                     <View style={[styles.ButtonRight,{width:"100%"}]}>
-                    <Text style={[styles.buttonText,{color:cash==""?"silver":"white"}]}>{msg}</Text> 
+                    <Text style={[styles.buttonText,{color:(csh=="")?"silver":"white"}]}>{msg}</Text> 
                      </View>
              </LinearGradient>
              </TouchableOpacity>
@@ -1845,7 +1855,7 @@ CANCEL JOB
     return(
       <Modal
       isVisible={ridemodal}
-      backdropOpacity={0.7}
+      backdropOpacity={0.9}
       animationIn="fadeInUp"
       animationOut="fadeOutDown"
       animationInTiming={110}
@@ -1855,7 +1865,7 @@ CANCEL JOB
       onRequestClose={() => { console.log("c")}}
    >
   
-  <View style={{ flex: 1, backgroundColor:'rgba(0,0,0.2,0.9)', justifyContent: 'center', alignItems: 'center' }}>
+  <View style={{ flex: 1,justifyContent: 'center', alignItems: 'center' }}>
     
 <View style={{flexDirection:"row",justifyContent:"space-between",width:wp("90%")}}>
 
@@ -2255,7 +2265,7 @@ if(cw!=false && cw!=="f"){
     )
   }
  
- 
+ console.log("cash : ",cash)
 
   return(
   <SafeAreaView style={{flex:1}}>  
