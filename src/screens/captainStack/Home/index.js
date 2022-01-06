@@ -101,6 +101,17 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
         socket.emit("stop_sharing_location",{socket:socket.id});
     }
 
+    useEffect(() => {
+      SocketOn();
+      socket.emit("receive_location_from_captain", {
+        id: socket.id,
+        user_id: user._id,
+        location: {
+          type: "Point",
+          coordinates: [111, 1212],
+        },
+      });
+    }, [ ])
 
   useEffect(() => {
     if(refresh){
