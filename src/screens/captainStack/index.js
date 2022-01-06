@@ -12,7 +12,7 @@ export   const   screens =
    Home,
 
   // CaptainPortal,
-  // Profile,
+  Profile,
   // ChangePin,
 // ChangeCar,
 // TripDetail,
