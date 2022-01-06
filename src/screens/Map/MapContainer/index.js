@@ -113,7 +113,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   function handleBackButtonClick() {
 
-    if (!props.navigation.isFocused()) {
+    if (!props.propsH.navigation.isFocused()) {
       return false;
     }else{
       if(!normalPay)
