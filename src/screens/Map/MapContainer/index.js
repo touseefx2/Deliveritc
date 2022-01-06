@@ -18,8 +18,11 @@ import StarRating from 'react-native-star-rating';
 import {Input } from '@ui-kitten/components';
 import { tr } from 'date-fns/locale';
 import db from "../../../database/index"
-import  Modal   from 'react-native-modal';
+// import  Modal as modall  from 'react-native-modal';
 import { ActivityIndicator } from 'react-native-paper';
+import dependencies from '../../../../dependencies';
+import  modal  from dependencies.modal;
+
 
 
 const gapikey="AIzaSyAJeMjKbTTRvoZJe0YoJc48VhaqbtoTmug"
@@ -1844,7 +1847,7 @@ CANCEL JOB
     "requestride")
     
     return(
-      <Modal
+      <modal
       animationType='fade'
       transparent={true}
       visible={ridemodal}>
@@ -1959,7 +1962,7 @@ onPress={()=>{onClickAccept()}}>
 
       </View>
   
-    </Modal>
+    </modal>
     )
 }
 
