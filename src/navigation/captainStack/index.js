@@ -34,6 +34,8 @@ const Drawer  = createDrawerNavigator();
     
         <Drawer.Screen  name="Homes" component={Home_Stack} options={icon.homeIcon}  />
         <Drawer.Screen  name="Captain Portal" component={CaptainPortal_Stack} options={icon.cpIcon}  />
+       <Drawer.Screen  name="Notifications" component={Notification_Stack} options={icon.nIcon}  />
+
          {/*  <Drawer.Screen  name="Change PIN" component={screens.ChangePin} options={icon.pinIcon}  />
         <Drawer.Screen  name="Change Car" component={screens.ChangeCar} options={ icon.carIcon}  />
          */}
@@ -93,14 +95,14 @@ const CaptainPortal_Stack = ()=>
        }}
        headerMode='none'
    >
-       {/* <Stack.Screen  name="CaptainPortal" component={screens.CaptainPortal}  
+       <Stack.Screen  name="CaptainPortal" component={screens.CaptainPortal}  
         // options={props => {
         //   let parent = props.navigation.dangerouslyGetParent();
         //   parent.setOptions({
         //     swipeEnabled: true
         //   })
         // }}
-       /> */}
+       />
 
 <Stack.Screen  name="Profile" component={screens.Profile}  
         // options={props => {
@@ -133,6 +135,8 @@ const CaptainPortal_Stack = ()=>
    </Stack.Navigator>
     )
 }
+
+
  
 
 // const Trips_Stack = ()=> 
@@ -168,3 +172,39 @@ const CaptainPortal_Stack = ()=>
 //    </Stack.Navigator>
 //     )
 // }
+
+
+const Notification_Stack = ()=> 
+{
+    return(
+   <Stack.Navigator 
+       initialRouteName="Notification"
+       screenOptions={{
+         animationEnabled: false
+       }}
+       headerMode='none'
+   >
+       <Stack.Screen  name="Notification" component={screens.Notification}  
+        // options={props => {
+        //   let parent = props.navigation.dangerouslyGetParent();
+        //   parent.setOptions({
+        //     swipeEnabled: true
+        //   })
+        // }}
+       />
+
+<Stack.Screen  name="Notification_Detail" component={screens.Notification_Detail}  
+        // options={props => {
+        //   let parent = props.navigation.dangerouslyGetParent();
+        //   parent.setOptions({
+        //     swipeEnabled:false
+        //   })
+        // }}
+       />
+
+ 
+  
+   </Stack.Navigator>
+    )
+}
+ 

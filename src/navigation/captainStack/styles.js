@@ -70,11 +70,11 @@ const skillIcon = {
     )  
     }
 
-  const pinIcon = {
+  const nIcon = {
     headerShown: false,
     // title:"Categories",
     drawerIcon: ({ focused, size }) => (
-         <utils.vectorIcon.FontAwesome size={22} name="key" color="white" />
+         <utils.vectorIcon.SimpleLineIcons size={22} name="bell" color="white" />
     )  
     }
 
@@ -127,7 +127,7 @@ const logoutIcon = {
   )
 }
 
-const icon={homeIcon,logoutIcon,profileIcon,chatIcon,skillIcon,reportIcon,rateIcon,pinIcon,carIcon,cpIcon}
+const icon={homeIcon,logoutIcon,profileIcon,chatIcon,skillIcon,reportIcon,rateIcon,nIcon,carIcon,cpIcon}
 
 export default icon;
 

@@ -7,7 +7,7 @@ import theme from "../themes/index"
 import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
 
-export default  inject("store")(observer(StackHeader));
+export default inject("userStore","generalStore","carStore","tripStore")(observer(StackHeader));
 
 
   function StackHeader (props) {

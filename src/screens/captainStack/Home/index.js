@@ -30,7 +30,6 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
 	const [refresh,setrefresh]=useState(false);
   const [getcarDataonce,setgetcarDataonce]=useState(false);
-  const [getuserOnce,setguserOnce]=useState(false);
  
 
   const window = Dimensions.get('window');
@@ -89,7 +88,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
 	  }
  
-    const socket = io("http://192.168.10.9:3001");
+    const socket = io(db.link.socket);
     const SocketOn=()=>{
       socket.on("connect", () => {
         console.log(`"Socket : I'm connected with the back-end`);
@@ -104,9 +103,9 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   useEffect(() => {
     if(refresh){
       if(isInternet){
-      setloaderT(false);setguserOnce(false);setgetcarDataonce(false) 
+      setloaderT(false);setgetcarDataonce(false); 
       setisServerError("A");setrefresh(false);
-      getCar();getUser();skipTrip()
+      getCar();skipTrip()
 
       if(cl!=""){
        
@@ -230,7 +229,7 @@ setloaderT(false);
       //  maximumAge: 3000,
       //  timeout:30000,
         enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  ,
-        distanceFilter:1,
+        distanceFilter:15,
      
    }
    )
@@ -317,7 +316,7 @@ const UpdateUser=(location,suc,a,e)=>{
 		  	 console.log("Update user location response : " , response.data.location);
         
 			 
-         if(response.msg=="Session expire"){
+         if(response.msg=="Invalid Token"){
           utils.AlertMessage("",response.msg) ;
           onLogout()
           return;
@@ -383,7 +382,6 @@ const UpdateUser=(location,suc,a,e)=>{
       const header=authToken;
 
       
-     
       // method, path, body, header
       db.api.apiCall("get",db.link.getCar+uid,bodyData,header)
       .then((response) => {
@@ -391,7 +389,7 @@ const UpdateUser=(location,suc,a,e)=>{
              setisServerError(false)
              console.log("Get car response : " , response);
         
-             if(response.msg=="Session expire"){
+             if(response.msg=="Invalid Token"){
                utils.AlertMessage("",response.msg) ;
                onLogout()
               return;
@@ -405,6 +403,7 @@ const UpdateUser=(location,suc,a,e)=>{
              if(response.data){
                setCars(response.data[0]);
                setgetcarDataonce(true);
+               getUser()
                return;
              }
           
@@ -424,7 +423,6 @@ const UpdateUser=(location,suc,a,e)=>{
       const bodyData=false
       const header=authToken;
       const uid=user._id
-   
   
       // method, path, body, header
       db.api.apiCall("get",db.link.getUserById+uid,bodyData,header)
@@ -433,7 +431,6 @@ const UpdateUser=(location,suc,a,e)=>{
            console.log("getuser response : " , response);
    
            if(!response.data){
-          setguserOnce(false)
           //  utils.AlertMessage("", response.message ) ;
           return;
            }
@@ -442,7 +439,7 @@ const UpdateUser=(location,suc,a,e)=>{
            if(response.data){
               setUser(response.data[0]);
               setonline(response.data[0].is_online);
-              setguserOnce(true)
+            
            return;
            }
         
@@ -464,11 +461,7 @@ const UpdateUser=(location,suc,a,e)=>{
          if(!getcarDataonce){
            getCar()
            }
-
-           if(!getuserOnce){
-             getUser()
-           }
- 
+  
 
        }
 

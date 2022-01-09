@@ -3,6 +3,7 @@
 
 //local link
 const links = "http://192.168.10.9:3001/"
+const socket="http://192.168.10.9:3001"
 
 const login = "user/loginCaptain"
 const signup="user/addCaptain"
@@ -26,6 +27,9 @@ const paycashLess="trip/paybill/addtocredit/"
 
 const getcustomerWalletinfo="transaction_history/getHistoryByUser?user="
 
+const gettripbyUserwithDate="user/tripbyuser?user="
+const getportalwithDate="user/captainPortal?user="
+
 // const getAlbumsById = "customer/albums?customer_id=" //login cstmr buy albums
  
 
@@ -33,9 +37,9 @@ const getcustomerWalletinfo="transaction_history/getHistoryByUser?user="
 export  default link ={
     links,login,signup,updateUser
     ,uploadFile,getCar,updateTerms
-    ,getUserById,getTripsbyId,acceptTrip,arriveTrip,startTrip,endTrip,
+    ,getUserById,getTripsbyId,acceptTrip,arriveTrip,startTrip,endTrip,socket,
     skipTrip,cancelTrip,getAvgRating,
-    paycashEqual,paycashExtra,paycashLess,addTripRating,getcustomerWalletinfo
+    paycashEqual,paycashExtra,paycashLess,addTripRating,getcustomerWalletinfo,gettripbyUserwithDate,getportalwithDate
 }
 
 

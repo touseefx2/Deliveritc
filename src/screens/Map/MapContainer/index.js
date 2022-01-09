@@ -437,7 +437,6 @@ useEffect(() => {
 
   const fetchDistanceBetweenPointsOnline = (lat1, lng1, lat2, lng2,c) => {  
    
-    if(isInternet){
       var urlToFetchDistance = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='+lat1+','+lng1+'&destinations='+lat2+'%2C'+lng2+'&key='+gapikey;
       fetch(urlToFetchDistance)
                .then(res => {
@@ -478,13 +477,10 @@ useEffect(() => {
       // Do your stuff here
     })
     .catch(error => {
-               utils.AlertMessage("Fetch distance api error","Network request failed"),   
-              console.log("Problem occurred fetchdsistancematric : ",error);
-    });
-    }else{
-      utils.AlertMessage("","Please connect internet !")
-    }
-  
+              //  utils.AlertMessage("Fetch distance api error","Network request failed"),   
+               console.log("Problem occurred fetchdsistancematric : ",error);
+    }); 
+    
 }
  
 const onclickSkip=()=>{
@@ -1816,7 +1812,7 @@ CANCEL JOB
 
 </View>
 
-{ct>cancelTime&&(
+{ct>cancelTime && !startride &&(
   <TouchableOpacity onPress={()=>{cancelTrip()}}>
 <View style={{backgroundColor:"white",flexDirection:"row",padding:10}}>
 <utils.vectorIcon.Entypo name="circle-with-cross" color="silver" size={20} />
@@ -1934,24 +1930,23 @@ Pickup
   </View>
 
   <theme.Text  numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:17,marginLeft:10,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"capitalize",width:"83%"}}> 
-  Intercity - Islamabad
+  DeliverIt - Mini
  </theme.Text>
 
 </View>
 
 
-<View style={{flexDirection:"row",alignItems:"center",justifyContent:"center",padding:5,width:"100%",height:"35%"}}>
+<View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",padding:5,width:"100%",height:"35%"}}>
 {/* custmr rating  */}
-<View style={{width:"27%",flexDirection:"row",alignItems:"center",justifyContent:"space-evenly"}}>
+<View style={{width:"27%",flexDirection:"row",alignItems:"center",justifyContent:"space-evenly" }}>
 <utils.vectorIcon.Entypo name="user" color="silver" size={18}/>
-<Text style={{fontSize:14}}>{ar}</Text> 
-<utils.vectorIcon.Entypo name="star" color={theme.color.buttonLinerGC1} size={18}/>
+<Text numberOfLines={1} ellipsizeMode='tail' style={{fontSize:14,lineHeight:20,top:2}}>{ar.toFixed(1)}</Text> 
+<utils.vectorIcon.Entypo name="star"  color={theme.color.buttonLinerGC1} size={18}/>
 </View>
 
-<View style={{width:"73%",flexDirection:"row",alignItems:"center",justifyContent:"space-evenly"}}>
-<theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:14,color:"silver",fontFamily:theme.fonts.fontMedium,textTransform:"capitalize",width:"95%"}}> 
-  Earn: <theme.Text  style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"capitalize"}}>{request.rent} pkr | cash</theme.Text>
- </theme.Text>
+<View style={{width:"70%",flexDirection:"row",alignItems:"center", justifyContent:"space-between"}}>
+<theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:14,color:"silver",fontFamily:theme.fonts.fontMedium,textTransform:"capitalize",width:"22%",lineHeight:20}}> Earn:</theme.Text>
+<theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium,textTransform:"capitalize",width:"76%",lineHeight:20}}>{request.rent} pkr</theme.Text>
 </View>
   
 
@@ -1964,7 +1959,7 @@ onPress={()=>{onClickAccept()}}>
  Tap to accept
  </theme.Text>
  
- <Progress.Bar animated style={{position:"absolute",bottom:0}} progress={p}  color={theme.color.buttonLinerGC1} width={300} />
+<Progress.Bar animated style={{position:"absolute",bottom:0}} progress={p}  color={theme.color.buttonLinerGC1} width={300} />
 </TouchableOpacity>
   
 </View>
@@ -2265,8 +2260,6 @@ if(cw!=false && cw!=="f"){
     )
   }
  
- console.log("cash : ",cash)
-
   return(
   <SafeAreaView style={{flex:1}}>  
     
@@ -2312,9 +2305,9 @@ if(cw!=false && cw!=="f"){
 {!accept&&<Header setLoader={(c)=>setl(c)}  setActiveChecked={(t)=>setActiveChecked(t)}  propsH={props.propsH} />}
 {!accept &&<SearchBox gotoCurrentLoc={()=>gotoCurrentLoc()}  Search={search} accept={accept} propsH={props.propsH} setSearch={(t)=>setsearch(t)} /> }
 {(!accept && ridemodal==false ) && <Footer   active={activeChecked}/>}
-{(!accept &&  ridemodal==true && request) && renderRideRequestModal() }
+{(!accept &&  request) && renderRideRequestModal() }
 {renderCashConfirmModal()}
-
+ 
  <utils.Loader   loader={l} />
  
  </SafeAreaView>
