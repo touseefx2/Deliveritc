@@ -37,7 +37,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
   const {cars,setCars} =  props.carStore;
   const { user,setUser,cl,online,authToken,Logout} = props.userStore;
-  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal,tcp,dpd,tpd,settcp,setdpd,settpd,normalPay,setnormalPay ,normalPaycash,setnormalPaycash} = props.tripStore;
+  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal,tcp,dpd,tpd,settcp,setdcp,dcp,setdpd,settpd,normalPay,setnormalPay ,normalPaycash,setnormalPaycash} = props.tripStore;
   const {isInternet,isLocation} = props.generalStore;
 
   let isl=isLocation
@@ -137,6 +137,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setct(wt);
     setatime("");
     settcp("...");
+    setdcp("...")
     settpd("...");
     setdpd("...");
     setnolpl(0);
@@ -156,13 +157,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     setcashG(false);
     setcheckBox(false)
     setcash("")
-    // setcash("");
-    // setstarCount(0);
-
-    // settpd("");
-    // settripdetailmodal(false);
-    // setcaptainwt(0);
-    // 
+    setstarCount(0);
   
   }
  
@@ -172,7 +167,6 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   useEffect(() => {
     if(request){
- 
       setridemodal(true)
      } 
      if(!request){
@@ -192,7 +186,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
    
   useEffect(() => {
 
-    if(accept && !mr && !arrive){
+    if(accept && !mr && !arrive && request){
 
       let mark1={
         latitude:  cl.latitude,
@@ -218,7 +212,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
     }
 
-    if(accept && !mr && arrive){
+    if(accept && !mr && arrive && request){
 
       let mark1={
         latitude:  cl.latitude,
@@ -244,7 +238,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
     }
  
-  }, [accept,mr,arrive])
+  }, [accept,mr,arrive,request])
 
   useEffect(() => {
 if(arvtime!=""){
@@ -345,14 +339,24 @@ setcw("f")
     //  request.dropoff.location.latitude,
     //  request.dropoff.location.longitude,
     //  "startridedynamic")
+  
+    }
 
-   }
   }, [cl,request,startride])
 
   useEffect(() => {
    if(startride){
+
+     fetchDistanceBetweenPointsOnline(
+      cl.latitude,
+      cl.longitude,
+     request.dropoff.location.latitude,
+     request.dropoff.location.longitude,
+     "startridedynamic")
+    
+
        setwaitTime("f");
-       setct(wt)
+       setct(wt);
    }
   }, [startride])
  
@@ -433,16 +437,17 @@ useEffect(() => {
 })
 .then(res => {
  
-     if(res){
-    
+   
          var distanceString = res.rows[0].elements[0].distance.text;
          var timeString = res.rows[0].elements[0].duration.text;
          var timeSecond = res.rows[0].elements[0].duration.value;
          let s=timeSecond
          var travelTime = moment(new Date()).add(s, 'seconds').format('h : mm A')
+
          settcp(timeString)
+         setdcp(distanceString). //distance  captain curent loc  to user  pickup loc
          return;
-     }
+     
        
 
 })
@@ -453,14 +458,14 @@ useEffect(() => {
       }else 
       if(c=="startridedynamic"){
         try {
+        alert("strt ride dynmc callllll")
          
-          fetch(urlToFetchDistance)
           .then(res => {       
           return res.json()
   })
   .then(res => {
    
-       if(res){
+       
         var distanceString = res.rows[0].elements[0].distance.text;
         var timeString = res.rows[0].elements[0].duration.text;
         var timeSecond = res.rows[0].elements[0].duration.value;
@@ -470,7 +475,7 @@ useEffect(() => {
         settpd(travelTime)
        
         return;
-       }
+    
       
   
   })
@@ -494,8 +499,7 @@ useEffect(() => {
                 return res.json()
         })
         .then(res => {
-         
-             if(res){
+       
               
               let distanceInMeter= res.rows[0].elements[0].distance.value;  //in meter
               let distanceInKm= distanceInMeter/1000;  //in meter to km
@@ -539,8 +543,6 @@ useEffect(() => {
         
          
         
-             }
-            
         
         })
         .catch(error => {
@@ -673,7 +675,7 @@ const onClickArrive=()=>{
 }
 
 const onClickStart=()=>{
-  
+  setl(true);
   const bodyData={current_location:{longitude:cl.longitude,latitude:cl.latitude}}
   const header=authToken;
  // method, path, body, header
@@ -710,15 +712,8 @@ const onClickStart=()=>{
 }
 
 const  ClickStart=()=>{
-
-  
+ 
   if(isInternet){ 
-    fetchDistanceBetweenPointsOnline(
-      cl.latitude,
-      cl.longitude,
-     request.dropoff.location.latitude,
-     request.dropoff.location.longitude,
-     "startridedynamic");
    onClickStart()
   }else{
     utils.AlertMessage("","Please connect internet")
@@ -1535,18 +1530,18 @@ CANCEL JOB
     let msg=""
     let c=0;
 
-    if(accept && !arrive && !startride && !endride){
+    if(accept && !arrive && !startride && !endride && request){
      msg="Arrived for pickup"
      c=0;
     }
-      else if(accept && arrive && !startride && !endride){
+      else if(accept && arrive && !startride && !endride && request){
       msg="Start Ride"
       c=1;
      }
-     else if(accept && arrive && startride && !endride){
+     else if(accept && arrive && startride && !endride && request){
       msg="End trip"
       c=2;
-    }else if(accept && arrive && startride && endride){
+    }else if(accept && arrive && startride && endride && request){
         //  c=4
       // if(request.cardPay==true )
       // {
@@ -1988,7 +1983,7 @@ Pickup
 
 <View style={{backgroundColor:"white",padding:5,marginTop:-20,alignSelf:"center",borderRadius:10,elevation:1}}>
 <theme.Text numberOfLines={1} ellipsizeMode="tail"   style={{fontSize:14,color:"black",fontFamily:theme.fonts.fontMedium}}> 
-{tcp} | {request.distance.toFixed(2)} km
+{tcp} | {dcp}
  </theme.Text>
 </View>
  
@@ -2331,6 +2326,8 @@ if(cw!=false && cw!=="f"){
     )
   }
  
+  console.log("tpd ",tpd)
+  console.log("dpd ",dpd)
   
   return(
   <SafeAreaView style={{flex:1}}>  
@@ -2371,8 +2368,8 @@ if(cw!=false && cw!=="f"){
 {accept && isl==false  && <utils.TopMessage msg="Please turn on location" />}    
 {accept && tripdetailmodal &&  renderTripDetailModal()} 
 {accept && renderShowLocation()} 
-{accept && renderclIndactor()} 
-{accept && renderShowButton()}
+{accept  && renderclIndactor()} 
+{accept && request && renderShowButton()}
 
 {!accept&&<Header setLoader={(c)=>setl(c)}  setActiveChecked={(t)=>setActiveChecked(t)}  propsH={props.propsH} />}
 {!accept &&<SearchBox gotoCurrentLoc={()=>gotoCurrentLoc()}  Search={search} accept={accept} propsH={props.propsH} setSearch={(t)=>setsearch(t)} /> }

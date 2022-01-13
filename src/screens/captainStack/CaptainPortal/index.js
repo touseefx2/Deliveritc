@@ -721,7 +721,7 @@ acceptedTrips=portal.accepted_trips
 
 
 //captain rating
-captainRating=portal.rating.toFixed(1)
+captainRating= portal.rating!=null?portal.rating.toFixed(1):(0).toFixed(1)
 //get acptnce rate of week cyycle
 let t= 100/totalTrips
 let ar= parseFloat(acceptedTrips*t).toFixed(1)

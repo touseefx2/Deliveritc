@@ -8,12 +8,16 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
  function Splash(props) {
 
-  const {setLoader,user,authToken,notificationToken} =  props.userStore;
-  const {cars} =  props.carStore;
-  const {request,accept} =  props.tripStore;
-  const {isInternet}   =  props.generalStore;
+  const {cars,setCars} =  props.carStore;
+  const { user,setUser,cl,online,authToken,Logout,setLoader} = props.userStore;
+  const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal,tcp,dpd,tpd,settcp,setdpd,settpd,normalPay,setnormalPay ,normalPaycash,setnormalPaycash} = props.tripStore;
+  const {isInternet,isLocation} = props.generalStore;
+
+ 
  
   useEffect(() => {
+
+   
     setTimeout(() => {
       setLoader(false);
     }, 1500); 

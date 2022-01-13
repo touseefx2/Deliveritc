@@ -21,6 +21,8 @@ constructor(){
   @persist('object')   @observable  arvtime = "";      //arrive trip time
 
   @persist('object')   @observable  tcp = "...";  
+  @persist('object')   @observable  dcp = "...";  
+
   @persist('object')   @observable  dpd = "...";  
   @persist('object')   @observable  tpd = "...";  
  
@@ -51,6 +53,10 @@ constructor(){
 
    @action settcp=(obj)=>{         //set trip
     this.tcp=obj
+   }
+
+   @action setdcp=(obj)=>{         //set trip
+    this.dcp=obj
    }
 
    @action setdpd=(obj)=>{         //set trip

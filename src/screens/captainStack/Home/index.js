@@ -20,7 +20,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
   const {cars,setCars} =  props.carStore;
-  const {setrequest,accept,request,getReqById,setatime,setaccept,getreqloader,setgetreqloader,gro,setgro,endride} = props.tripStore;
+  const {setrequest,accept,request,getReqById,setatime,setaccept,getreqloader,setgetreqloader,gro,setgro,endride,normalPay} = props.tripStore;
   const {setLocation,isLocation,isInternet} = props.generalStore;
   const [loaderT,setloaderT]=useState(false);
   
@@ -99,6 +99,12 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
         socket.emit("stop_sharing_location",{socket:socket.id});
     }
  
+    useEffect(() => {
+      if(normalPay){
+       setrequest(false)
+       }
+   
+    }, [])
    
   useEffect(() => {
     if(refresh){
@@ -225,7 +231,6 @@ setloaderT(false);
    },
    { 
        showsBackgroundLocationIndicator:true,
-       
         enableHighAccuracy: true, timeout: 20000, maximumAge: 10000  ,
         distanceFilter:10,
      
@@ -326,7 +331,7 @@ const UpdateUser=(location,suc,a,e)=>{
          
 			  
 			if(suc){
-					subscribeLocation()
+					// subscribeLocation()
 				}
 			  
 				 
