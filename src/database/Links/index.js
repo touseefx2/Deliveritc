@@ -2,8 +2,8 @@
 // const link = "https://c0a23827e3e8.ngrok.io/"
 
 //local link
-const links = "http://192.168.10.9:3001/"
-const socket="http://192.168.10.9:3001"
+const links = "http://10.7.148.141:3001/"
+const socket="http://10.7.148.141:3001"
 
 const login = "user/loginCaptain"
 const signup="user/addCaptain"
@@ -29,16 +29,21 @@ const getcustomerWalletinfo="transaction_history/getHistoryByUser?user="
 
 const gettripbyUserwithDate="user/tripbyuser?user="
 const getportalwithDate="user/captainPortal?user="
+const  gettotaltripCalculationwithDate="user/getTripRecord?user="
+
+const getTripDispute="dispute?trip="
+const addTripDispute="dispute/add"
+
+const getTripTransctionHistory="transaction_history/getHistoryByTrip?trip="
 
 // const getAlbumsById = "customer/albums?customer_id=" //login cstmr buy albums
  
-
-
+ 
 export  default link ={
-    links,login,signup,updateUser
+     links,login,signup,updateUser
     ,uploadFile,getCar,updateTerms
-    ,getUserById,getTripsbyId,acceptTrip,arriveTrip,startTrip,endTrip,socket,
-    skipTrip,cancelTrip,getAvgRating,
+    ,getUserById,getTripsbyId,acceptTrip,arriveTrip,startTrip,endTrip,socket,addTripDispute,
+    skipTrip,cancelTrip,getAvgRating,gettotaltripCalculationwithDate,getTripDispute,getTripTransctionHistory,
     paycashEqual,paycashExtra,paycashLess,addTripRating,getcustomerWalletinfo,gettripbyUserwithDate,getportalwithDate
 }
 

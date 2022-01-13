@@ -8,8 +8,8 @@ export default function ToptMessage(props){
   
    if(props.screen!="Login"){
       return(
-         <View style={{backgroundColor:"black",padding:2}}>
-          <theme.Text style={{alignSelf:"center",color:"white",fontSize:14}}>{props.msg}</theme.Text>
+         <View style={{padding:2}}>
+          <theme.Text style={{alignSelf:"center",color:"red",fontSize:13}}>{props.msg}</theme.Text>
           </View>
       )
    }else{

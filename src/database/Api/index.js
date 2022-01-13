@@ -1,6 +1,6 @@
  
 import { Alert } from 'react-native'
-import  link  from '../Links/index'
+import  db  from "../index"
  
  
 export function apiCall(method,path,bodyData,headers) {
@@ -44,7 +44,7 @@ export function apiCall(method,path,bodyData,headers) {
     return (
       fetch(link.links+path,obj).then(res=>res.json())
         .then(data=>{
-          //  console.log("fetch api call response : ",data);
+            //  console.log("fetch api call response : ",data);
          if(headers!="upload")
           {
             return resolve(data)
@@ -55,7 +55,7 @@ export function apiCall(method,path,bodyData,headers) {
         })
       .catch(err=>{
         // var data = { type: 'Api', message: err }
-        // console.log("fetch api call catch error : ",err);
+        //  console.log("fetch api call catch error : ",err);
         return reject(err)
       })
 
@@ -65,8 +65,6 @@ export function apiCall(method,path,bodyData,headers) {
   })
 
 }
-
-
  
 
 export default api={

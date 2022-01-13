@@ -47,7 +47,7 @@ const newState = { ...state}  //copy from state before applying any filter. do n
 <View style={{flexDirection:"row",alignItems:"center"}}>
 
 <View style={{width:90,height:90,borderColor:"white",borderRadius:45,borderWidth:1,backgroundColor:theme.color.buttonLinerGC1,alignItems:"center",justifyContent:"center"}}>
- <Image  style={{width:89,height:89,borderRadius:44}}  source={require("../../assets/Sigin_Logo/siginLogo.png")} />
+ <Image  style={{width:89,height:89,borderRadius:44}}  source={{uri:user.profile_image}} />
 </View>
 
  

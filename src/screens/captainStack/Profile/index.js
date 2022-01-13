@@ -64,23 +64,18 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
    let carcapacity=""
    let carpower=""
    let cartype=""
+   let maxweight=0
 
     
        carname=cars.car_name.name;carid=cars._id;carnum=cars.registration_number;carcolor=cars.color;carcapacity=cars.seating_capacitiy;
-       cartype=cars.type.type;carpower=1800;carfuel="fuel"
+       cartype=cars.type.type;
+       carpower=cars.engine_capacitiy;carfuel=cars.fuel,maxweight=cars.max_weight
      
 
 return(
   <View style={{}}>
 
 <theme.Text style={styles.cardtitle}>{c1}</theme.Text>
-{Sep()}
-{Sep()}
-{Sep()}
- <View style={{flexDirection:"row",alignItems:"center",width:"98%",alignSelf:"center",justifyContent:"space-between" }}>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"38%"}}>Captain ID</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"52%"}}>{user._id}</theme.Text>
- </View>
  {Sep()}
  {SepLine()}
  {Sep()}
@@ -95,6 +90,17 @@ return(
  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20, width:"38%"}}>Phone</theme.Text>
  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"52%" }}>{user.mobile_number}</theme.Text>
  </View>
+ {user.email && user.email!="" &&(
+   <View>
+ {Sep()}
+ {SepLine()}
+ {Sep()}
+ <View style={{flexDirection:"row",alignItems:"center",width:"98%",alignSelf:"center",justifyContent:"space-between" }}>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"38%"}}>Email</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"52%"}}>{user.email}</theme.Text>
+ </View>
+   </View>
+ )}
  {Sep()}
  {SepLine()}
  {Sep()}
@@ -106,19 +112,12 @@ return(
  {SepLine()}
  {Sep()}
  <View style={{flexDirection:"row",alignItems:"center",width:"98%",alignSelf:"center",justifyContent:"space-between" }}>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20 ,width:"38%"}}>National ID</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20 ,width:"38%"}}>Cnic</theme.Text>
  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"52%" }}>{user.cnic}</theme.Text>
  </View>
 
  
 <theme.Text style={[styles.cardtitle,{marginTop:30}]}>{c2}</theme.Text>
-{Sep()}
-{Sep()}
-{Sep()}
- <View style={{flexDirection:"row",alignItems:"center",width:"98%",alignSelf:"center",justifyContent:"space-between" }}>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20 ,width:"38%"}}>Car ID</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"52%" }}>{carid}</theme.Text>
- </View>
  {Sep()}
  {SepLine()}
  {Sep()}
@@ -153,6 +152,13 @@ return(
  <View style={{flexDirection:"row",alignItems:"center",width:"98%",alignSelf:"center",justifyContent:"space-between" }}>
  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20 ,width:"38%"}}>Seat Capacity</theme.Text>
  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"52%" }}>{carcapacity}</theme.Text>
+ </View>
+ {Sep()}
+ {SepLine()}
+ {Sep()}
+ <View style={{flexDirection:"row",alignItems:"center",width:"98%",alignSelf:"center",justifyContent:"space-between" }}>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20 ,width:"38%"}}>Weight</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"52%" }}>{maxweight} Kg</theme.Text>
  </View>
  {Sep()}
  {SepLine()}

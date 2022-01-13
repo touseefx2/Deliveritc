@@ -23,7 +23,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   // console.log("user : ",user)
   // console.log("istermacpt : ",user.terms_accepted)
   // console.log("cars : ",cars)
-   console.log("at : ",authToken)
+  //  console.log("at : ",authToken)
   // console.log("nt : ",notificationToken)
   
   console.log("request : ",request)

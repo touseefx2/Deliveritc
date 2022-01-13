@@ -1,6 +1,7 @@
 import { observable,makeObservable,action } from "mobx";
 import {  persist } from 'mobx-persist'
- 
+import carstore from "../index";
+
 export default  class  userstore {
 
 constructor(){
@@ -57,6 +58,7 @@ constructor(){
        this.authToken='';
        this.user = false;
        this.isterms_accepted=false;
+       carstore.carStore.setCars(false)
    }
 
    

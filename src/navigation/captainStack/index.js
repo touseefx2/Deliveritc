@@ -105,12 +105,12 @@ const CaptainPortal_Stack = ()=>
        />
 
 <Stack.Screen  name="Profile" component={screens.Profile}  
-        // options={props => {
-        //   let parent = props.navigation.dangerouslyGetParent();
-        //   parent.setOptions({
-        //     swipeEnabled:false
-        //   })
-        // }}
+        options={props => {
+          let parent = props.navigation.dangerouslyGetParent();
+          parent.setOptions({
+            swipeEnabled:false
+          })
+        }}
        />
 
 {/* <Stack.Screen  name="Tripstack" component={Trips_Stack}  
@@ -122,7 +122,7 @@ const CaptainPortal_Stack = ()=>
         }}
        /> */}
 
-{/* <Stack.Screen  name="TripDetail" component={screens.TripDetail}  
+<Stack.Screen  name="TripDetail" component={screens.TripDetail}  
         options={props => {
           let parent = props.navigation.dangerouslyGetParent();
           parent.setOptions({
@@ -130,12 +130,11 @@ const CaptainPortal_Stack = ()=>
           })
         }}
        />
-       */}
+      
   
    </Stack.Navigator>
     )
 }
-
 
  
 

@@ -19,24 +19,26 @@ import {Input } from '@ui-kitten/components';
 import db from "../../../database/index"
 import  Modal  from 'react-native-modal';
 import { ActivityIndicator, TextInput } from 'react-native-paper';
- 
+import Geocoder from 'react-native-geocoding';
 
-const gapikey="AIzaSyAJeMjKbTTRvoZJe0YoJc48VhaqbtoTmug"
- 
+
+
+
 export default inject("userStore","generalStore","carStore","tripStore")(observer(MapContainer));
  
 
    function MapContainer (props)   {
+ 
+    const gapikey="AIzaSyAJeMjKbTTRvoZJe0YoJc48VhaqbtoTmug"
  
     //before arrive after accept
     let ctnotcuttimeba=10  //2min or 120 sec no cut charges if captain cancel trip before 2 min so not cut charges otherwise cut charges
     let ctcfba=40 //amount paid before arrive after then 2 min in after acpt
     let ctcfaa=90 //amount paid  +  after arrive and cancel after grace time or amound paid - before gracetime
 
- 
-  //  ,request,changerequest,trip,settrip   //userstore
+  
   const {cars,setCars} =  props.carStore;
-  const { user,setUser,cl ,online,authToken,Logout} = props.userStore;
+  const { user,setUser,cl,online,authToken,Logout} = props.userStore;
   const {request,changerequest,setrequest,accept,setaccept,atime,setatime,arrive,setarrive,startride,setstartride,endride,setendride,setwaitTime,waitTime,arvtime,setarvtime,ar,setar,ridemodal,setridemodal,tcp,dpd,tpd,settcp,setdpd,settpd,normalPay,setnormalPay ,normalPaycash,setnormalPaycash} = props.tripStore;
   const {isInternet,isLocation} = props.generalStore;
 
@@ -49,10 +51,7 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     let cancelTime=40     //     sec  
     const [ct, setct] = useState(wt);  //w8 time unti se nechy ktna time rah gya wo
 
-  // const [captainwt, setcaptainwt] = useState(0);  //captain w8 time
-
-  // const [cl, setcl] = useState("");  //curent marker locaion 
-  
+ 
   const [loader, setloader] = useState(false); //loading indctr in button
   const [l, setl] = useState(false); //loading 
 
@@ -77,29 +76,14 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
 
   const [skip,setskip] = useState(false);
 
-  // const [accept,setaccept] = useState(false);
-  // const [arrive,setarrive] = useState(false);
-  // const [startride,setstartride] = useState(false);
-  // const [endride,setendride] = useState(false);
-
-  // const [ridemodal,setridemodal] = useState(false);
   const [p,setp] = useState(0); //progress //0 to 10 sec after 10 sec skip/rjct click
 
-  // const [dcp,setdcp] = useState("..."); // distance from current loc to pickup location  reqst modal
-  // const [tcp,settcp] = useState("..."); // time from current loc to pickup location      reqesr modal
-  // const [dpd,setdpd] = useState("..."); // distance from    pickup location to dropofloce  startride true
-  // const [tpd,settpd] = useState("..."); // time from  pickup location to dropofloce  startride true
- 
   const [nolpl,setnolpl] = useState(0); //numofline in pickup location in trip modal
 
   const [starCount,setstarCount] = useState(0);
- 
- 
- 
+  
   const mapRef = useRef();
    
-
-
   useEffect(() => {
     const subscription  = BackHandler.addEventListener('hardwareBackPress', handleBackButtonClick);
    
@@ -110,7 +94,6 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
   },[normalPay])
   
-
   function handleBackButtonClick() {
 
     if (!props.propsH.navigation.isFocused()) {
@@ -144,7 +127,6 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
     );
   }
  
-
   const clearallFields=()=>{
     settripdetailmodal(false)
     setridemodal(false);
@@ -186,6 +168,10 @@ export default inject("userStore","generalStore","carStore","tripStore")(observe
   
   }
  
+  useEffect(() => {
+    Geocoder.init(gapikey,{language : "en"});
+  }, [])
+
   useEffect(() => {
     if(request){
  
@@ -301,15 +287,13 @@ if(sec>=wt){
     const bodyData=false
     const header=authToken;
     const cid=request.customer._id
-    
-
+     
     // method, path, body, header
     db.api.apiCall("get",db.link.getcustomerWalletinfo+cid,bodyData,header)
     .then((response) => {
          setll(false)
          console.log("getcustomerWalletinforesponse : " , response);
- 
-
+  
          if(response.msg=="Invalid Token"){
           utils.AlertMessage("", response.msg ) ;
           onLogout();
@@ -317,6 +301,11 @@ if(sec>=wt){
           }
 
           if(response.data){
+             
+            if(response.data.length<=0){
+              setcw(0)
+              return;
+            }
             let r=response.data[0]
             setcw(r.balance)
             return;
@@ -331,10 +320,10 @@ if(sec>=wt){
         
       
     }).catch((e) => {
-      setcw(false)
+      setcw("false")
       setll(false);
-       utils.AlertMessage("","Network request failed")
-       console.error("getuser catch error : ", e)
+      //  utils.AlertMessage("","Network request failed")
+       console.error("getcustomerWalletinforesponse catch error : ", e)
       return;
     })
 
@@ -352,12 +341,12 @@ setcw("f")
   useEffect(() => {
    if(cl!=""&&startride&&request){
  
-    fetchDistanceBetweenPointsOnline(
-      cl.latitude,
-      cl.longitude,
-     request.dropoff.location.latitude,
-     request.dropoff.location.longitude,
-     "startride")
+    // fetchDistanceBetweenPointsOnline(
+    //   cl.latitude,
+    //   cl.longitude,
+    //  request.dropoff.location.latitude,
+    //  request.dropoff.location.longitude,
+    //  "startridedynamic")
 
    }
   }, [cl,request,startride])
@@ -436,52 +425,141 @@ useEffect(() => {
 
 
   const fetchDistanceBetweenPointsOnline = (lat1, lng1, lat2, lng2,c) => {  
-   
-      var urlToFetchDistance = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric&origins='+lat1+','+lng1+'&destinations='+lat2+'%2C'+lng2+'&key='+gapikey;
-      fetch(urlToFetchDistance)
-               .then(res => {
-               return res.json()
-    })
-    .then(res => {
-        
-            if(res){
-   
-                var distanceString = res.rows[0].elements[0].distance.text;
-                var timeString = res.rows[0].elements[0].duration.text;
-                var timeSecond = res.rows[0].elements[0].duration.value;
-                let s=timeSecond
-                var travelTime = moment(new Date()).add(s, 'seconds').format('h : mm A')
-  
-              if(c=="requestride"){
-                // setdcp(distanceString)
-                settcp(timeString)
-              }
-              else if(c=="startride"){
-              
-                setdpd(distanceString)
-                settpd(travelTime)
+      
+    var urlToFetchDistance = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=metric?mode=driving&origins='+lat1+','+lng1+'&destinations='+lat2+'%2C'+lng2+'&key='+gapikey;
      
-                      }
-             else if(c=="endride"){
+      if(c=="requestride"){
+        fetch(urlToFetchDistance)
+        .then(res => {
+        return res.json()
+})
+.then(res => {
+ 
+     if(res){
+    
+         var distanceString = res.rows[0].elements[0].distance.text;
+         var timeString = res.rows[0].elements[0].duration.text;
+         var timeSecond = res.rows[0].elements[0].duration.value;
+         let s=timeSecond
+         var travelTime = moment(new Date()).add(s, 'seconds').format('h : mm A')
+         settcp(timeString)
+         return;
+     }
+       
+
+})
+.catch(error => {
+       //  utils.AlertMessage("Fetch distance api error","Network request failed"),   
+        console.log("Problem occurred fetchdsistancematric : ",error);
+});
+      }else 
+      if(c=="startridedynamic"){
+        try {
+         
+          fetch(urlToFetchDistance)
+          .then(res => {       
+          return res.json()
+  })
+  .then(res => {
+   
+       if(res){
+        var distanceString = res.rows[0].elements[0].distance.text;
+        var timeString = res.rows[0].elements[0].duration.text;
+        var timeSecond = res.rows[0].elements[0].duration.value;
+        let s=timeSecond
+        var travelTime = moment(new Date()).add(s, 'seconds').format('h : mm A')
+        setdpd(distanceString)
+        settpd(travelTime)
+       
+        return;
+       }
+      
   
+  })
+  .catch(error => {
+         //  utils.AlertMessage("Fetch distance api error","Network request failed"),   
+          console.log("Problem occurred fetchdsistancematric : ",error);
+  });
+
+        } catch (error) {
+          console.log("start ride dynamic fetchDistanceBetweenPointsOnline api error ",error)
+        }
+      }
+      else
+      if(c=="endride"){
+   
+        try {
+          
+          setl(true);
+          fetch(urlToFetchDistance)
+          .then(res => {
+                return res.json()
+        })
+        .then(res => {
+         
+             if(res){
+              
               let distanceInMeter= res.rows[0].elements[0].distance.value;  //in meter
               let distanceInKm= distanceInMeter/1000;  //in meter to km
-              console.log("pickup se captn k cl ka distance in endride  ",distanceInKm)
-  
-               onClickEnd(distanceInKm);
-                       }
-  
-            }
+              // console.log("pickup se captn k cl ka distance in endride  ",distanceInKm)
+             
+              let loc={latitude:lat2,longitude :lng2}
+
+              Geocoder.from(loc)
+              .then(json => {
+                 
+                
+                let  name=json.results[0].formatted_address;
+                let address=json.results[0].formatted_address;
+            
+               
+                let data={
+                  name:name,
+                  address:address,
+                  location:{
+                    longitude:lng2,
+                    latitude:lat2
+                  }
+                  }
+            
+                  onClickEnd(distanceInKm,data);
+                  
+                return;
               
-              // return distanceString;
-      // Do your stuff here
-    })
-    .catch(error => {
-              //  utils.AlertMessage("Fetch distance api error","Network request failed"),   
-               console.log("Problem occurred fetchdsistancematric : ",error);
-    }); 
+            
+            
+             
+              })
+              .catch(error => {
+                setl(false);
+                if(error.code==4){
+                  utils.AlertMessage("","Please enable billing account on your google map api key")
+                }
+                console.warn("geocoder error : ",error);
+                return;
+            });
+        
+         
+        
+             }
+            
+        
+        })
+        .catch(error => {
+               setl(false);
+                utils.AlertMessage("Fetch distance api error","Network request failed"),   
+                console.log("Problem occurred fetchdsistancematric : ",error);
+        });
+
+        } catch (error) {
+          setl(false);
+          console.log("end ride fetchDistanceBetweenPointsOnline api error ",error)
+        }
     
+  }
+ 
 }
+     
  
 const onclickSkip=()=>{
    setskip(true);
@@ -503,7 +581,7 @@ const onClickAccept=()=>{
     setl(true);  
     setskip(true)
 
-    const bodyData={captain:user._id,vehicle:cars._id}
+    const bodyData={captain:user._id,vehicle:cars._id,current_location:{longitude:cl.longitude,latitude:cl.latitude}}
     const header=authToken;
     // method, path, body, header
     db.api.apiCall("put",db.link.acceptTrip+request._id,bodyData,header)
@@ -554,7 +632,7 @@ const onClickArrive=()=>{
   if(isInternet){ 
     setl(true);  
 
-    const bodyData={}
+    const bodyData={current_location:{longitude:cl.longitude,latitude:cl.latitude}}
     const header=authToken;
     // method, path, body, header
     db.api.apiCall("put",db.link.arriveTrip+request._id,bodyData,header)
@@ -597,59 +675,69 @@ const onClickArrive=()=>{
 }
 
 const onClickStart=()=>{
+  
+  const bodyData={current_location:{longitude:cl.longitude,latitude:cl.latitude}}
+  const header=authToken;
+ // method, path, body, header
+ db.api.apiCall("put",db.link.startTrip+request._id,bodyData,header)
+ .then((response) => {
+       
+        console.log("Start trip response : " , response);
+        setl(false);
+
+       if(response.msg=="Invalid Token"){
+         utils.AlertMessage("", response.msg ) ;
+         onLogout();
+         return;
+         }
+
+       if(response.success){
+         setstartride(true)
+           return;
+           }
+
+        if(!response.success){
+             utils.AlertMessage("",response.message)
+            return;
+            }
+
+
+     return;
+ }).catch((e) => {
+      setl(false);
+   //  utils.AlertMessage("","Network request failed");
+    console.error("Start trip catch error : ", e)
+   return;
+ })
+}
+
+const  ClickStart=()=>{
 
   
   if(isInternet){ 
-    setl(true);  
-
-    const bodyData={}
-    const header=authToken;
-    // method, path, body, header
-    db.api.apiCall("put",db.link.startTrip+request._id,bodyData,header)
-    .then((response) => {
-          
-           console.log("Start trip response : " , response);
-           setl(false);
-
-          if(response.msg=="Invalid Token"){
-            utils.AlertMessage("", response.msg ) ;
-            onLogout();
-            return;
-            }
-  
-          if(response.success){
-            setstartride(true);
-              return;
-              }
-
-           if(!response.success){
-                utils.AlertMessage("",response.message)
-               return;
-               }
-   
-
-        return;
-    }).catch((e) => {
-         setl(false);
-      //  utils.AlertMessage("","Network request failed");
-       console.error("Start trip catch error : ", e)
-      return;
-    })
-    
-
+    fetchDistanceBetweenPointsOnline(
+      cl.latitude,
+      cl.longitude,
+     request.dropoff.location.latitude,
+     request.dropoff.location.longitude,
+     "startridedynamic");
+   onClickStart()
   }else{
     utils.AlertMessage("","Please connect internet")
   }
  
 }
  
-const onClickEnd=(d)=>{
-
+const onClickEnd=(dist,DropOff)=>{
   
   if(isInternet){ 
-    setl(true);
+   
+    const bodyData={
+      distance:dist,
+      current_location:{longitude:DropOff.location.longitude,latitude:DropOff.location.latitude},
+      dropoff:DropOff
+    }
 
-    const bodyData={distance:d}
     const header=authToken;
     // method, path, body, header
     db.api.apiCall("put",db.link.endTrip+request._id,bodyData,header)
@@ -691,6 +779,45 @@ const onClickEnd=(d)=>{
  
 }
 
+const onClickcancelTrip=(r,wt,cf)=>{
+  setl(true)
+
+  const bodyData={
+    cancellation_reason:r,
+    waiting_time:wt,
+    canceling_fee:cf,
+    current_location:{longitude:cl.longitude,latitude:cl.latitude}
+  }
+  const rid=request._id
+  const header=authToken;
+  // method, path, body, header
+  db.api.apiCall("put",db.link.cancelTrip+rid,bodyData,header)
+  .then((response) => {
+    console.log("Cancel trip response : " , response);
+    setl(false); 
+
+        if(response.success){
+         clearallFields()
+          utils.ToastAndroid.ToastAndroid_SB("Cancel") ;
+        return;
+         }
+
+         if(!response.success){
+              utils.AlertMessage("",response.message)
+             return;
+             }
+ 
+      return;
+  }).catch((e) => {     
+    //  utils.AlertMessage("","Network request failed");
+     console.error("Cancel trip   catch error : ", e);
+     setl(false); 
+    return;
+  })
+
+
+}
+
   const onTextLayout = useCallback(e => {
      setnolpl(e.nativeEvent.lines.length<=5?e.nativeEvent.lines.length:5)
 }, []);
@@ -710,43 +837,6 @@ return dot;
     }
     call(args).catch((e)=>{console.log("call error : ",e)})
   }
-
-  const onClickcancelTrip=(r,wt,cf)=>{
-    setl(true)
-    const bodyData={
-      cancellation_reason:r,
-      waiting_time:wt,
-      canceling_fee:cf
-    }
-    const rid=request._id
-    const header=authToken;
-    // method, path, body, header
-    db.api.apiCall("put",db.link.cancelTrip+rid,bodyData,header)
-    .then((response) => {
-      console.log("Cancel trip response : " , response);
-      setl(false); 
-
-          if(response.success){
-           clearallFields()
-            utils.ToastAndroid.ToastAndroid_SB("Cancel") ;
-          return;
-           }
- 
-           if(!response.success){
-                utils.AlertMessage("",response.message)
-               return;
-               }
-   
-        return;
-    }).catch((e) => {     
-      //  utils.AlertMessage("","Network request failed");
-       console.error("Cancel trip   catch error : ", e);
-       setl(false); 
-      return;
-    })
-
-
-}
 
 //after acpt nd before arrive
   const canceltripYes=()=>{
@@ -832,31 +922,7 @@ return dot;
     }else{
       utils.AlertMessage("","Please connect internet !")
     }
-
-     
-   
-    // if(trip.length>0){
-    //   trip.map((e,i,a)=>{
-    //   if(e.id==request.id){
-    //     trip[i].status= "cancel"
-    //     trip[i].wait_time=sec
-    //     trip[i].cancelStatus= "Paid";  //if wait time is over
-    //     trip[i].cancelby= "captain";
-    //     }
-    //   })
-    // }
-   
-    
-  //   setTimeout(() => {
-  //     // setaccept(!accept);
-  //     // setarrive(!arrive)
-  //     // settcp("...")
-  //     // setdcp("...")
-  //     // setct(waitTime)
-  //     clearallFields()
-  //  setl(false)
-  //     utils.ToastAndroid.ToastAndroid_SBC("JOb cancel success !")
-  //   }, 1200);
+ 
  
 }
   
@@ -962,7 +1028,7 @@ return dot;
         { text: "Yes", onPress: () =>  {
 
           if(isl==true){
-            onClickStart();
+            ClickStart();
            }else if(isl==false){
              utils.AlertMessage("","Please turn on location !")
            }
@@ -987,13 +1053,18 @@ return dot;
         },
         { text: "Yes", onPress: () =>  {
           if(isl==true){
-           fetchDistanceBetweenPointsOnline(
-            request.pickup.location.latitude,
-            request.pickup.location.longitude,
-            cl.latitude,
-            cl.longitude,
-            "endride"
-           )
+           if(isInternet){
+            fetchDistanceBetweenPointsOnline(
+              request.pickup.location.latitude,
+              request.pickup.location.longitude,
+              cl.latitude,
+              cl.longitude,
+              "endride"
+             )
+           }else{
+             utils.AlertMessage("","Please connect internet !")
+           }
+   
            }else if(isl==false){
              utils.AlertMessage("","Please turn on location !")
            }
@@ -1005,8 +1076,8 @@ return dot;
   
 const  onCashsubmit=(c,ra)=>{
 
+  console.log("remiang amount : ",ra)
   
-
     if(c=="normal"){
         setcashconfirmMV(false);
         setl(true);
@@ -2041,7 +2112,7 @@ if(cw!=false && cw!=="f"){
 <utils.vectorIcon.FontAwesome name={"circle"} color={"#0e47a1"}  size={15}/> 
   )}
  </TouchableOpacity>
- <TouchableOpacity onPress={()=>{if(isInternet){setcheckBox(!checkBox)}else{alert("","Please connect internet")}}}style={{width:"92%"}}>
+ <TouchableOpacity onPress={()=>{if(isInternet){setcheckBox(!checkBox)}else{utils.AlertMessage("","Please connect internet")}}}style={{width:"92%"}}>
  <Text  style={{fontSize:15,color:!checkBox?"silver":"black"}}>Add extra amount in user wallet</Text> 
  </TouchableOpacity>
 </View>
@@ -2049,7 +2120,7 @@ if(cw!=false && cw!=="f"){
 {checkBox  &&(
 <View style={{marginTop:20}}>
 
-{cw!=="f" && cw!==false && !ll &&
+{cw!=="f" && cw!=="false" && !ll &&
 <View>
 <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
 <utils.vectorIcon.AntDesign name={"wallet"} color={"#0e47a1"}  size={28} style={{width:"10%"}}/> 
@@ -2083,8 +2154,9 @@ if(cw!=false && cw!=="f"){
   </View>
 }
  
-{cw==false && !ll &&
+{cw=="false" && cw!=0 && !ll &&
   <View style={{width:"100%",alignItems:"center",justifyContent:"center"}}>
+    <Text  style={{fontSize:16,color:"black"}}>Server error</Text> 
   <TouchableOpacity onPress={()=>{if(isInternet){getcustomerWalletinfo()}else{utils.AlertMessage("","Please connect internet")}}} >
  <Text  style={{fontSize:15,color:"red",textDecorationLine:"underline"}}>Retry</Text> 
  </TouchableOpacity>
@@ -2130,7 +2202,7 @@ if(cw!=false && cw!=="f"){
 {checkBox&&(
 <View style={{marginTop:20}}>
 
-{cw!=="f" && cw!==false && !ll &&(
+{cw!=="f" && cw!=="false" && !ll &&(
   <View>
 <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between",width:"100%"}}>
 <utils.vectorIcon.AntDesign name={"wallet"} color={"#0e47a1"}  size={28} style={{width:"10%"}}/> 
@@ -2172,8 +2244,9 @@ if(cw!=false && cw!=="f"){
   </View>
 }
  
-{cw==false && !ll &&
+{cw=="false"  && !ll &&
   <View style={{width:"100%",alignItems:"center",justifyContent:"center"}}>
+   <Text  style={{fontSize:16,color:"black"}}>Server error</Text>
   <TouchableOpacity onPress={()=>{if(isInternet){getcustomerWalletinfo()}else{utils.AlertMessage("","Please connect internet")}}} >
  <Text  style={{fontSize:15,color:"red",textDecorationLine:"underline"}}>Retry</Text> 
  </TouchableOpacity>
@@ -2260,6 +2333,7 @@ if(cw!=false && cw!=="f"){
     )
   }
  
+  
   return(
   <SafeAreaView style={{flex:1}}>  
     

@@ -15,7 +15,6 @@ import styles from "./styles"
 import moment from 'moment';
 import db from "../../../database/index" 
 
-
 let bc="silver"
 let bckc="white"
 let br=5
@@ -26,22 +25,22 @@ let bw=0.5
 export default inject("userStore","generalStore","carStore","tripStore")(observer(CaptainPortal));
 
  
-function dateCheck(from,to,check) {
-//check  specific date exist btw two dates
-  var dateFrom = from;
-  var dateTo = to;
-  var dateCheck = check;
+// function dateCheck(from,to,check) {
+// //check  specific date exist btw two dates
+//   var dateFrom = from;
+//   var dateTo = to;
+//   var dateCheck = check;
   
-  var d1 = dateFrom.split("/");
-  var d2 = dateTo.split("/");
-  var c = dateCheck.split("/");
+//   var d1 = dateFrom.split("/");
+//   var d2 = dateTo.split("/");
+//   var c = dateCheck.split("/");
   
-  var from = new Date(d1[2], parseInt(d1[1])-1, d1[0]);  // -1 because months are from 0 to 11
-  var to   = new Date(d2[2], parseInt(d2[1])-1, d2[0]);
-  var check = new Date(c[2], parseInt(c[1])-1, c[0]);
+//   var from = new Date(d1[2], parseInt(d1[1])-1, d1[0]);  // -1 because months are from 0 to 11
+//   var to   = new Date(d2[2], parseInt(d2[1])-1, d2[0]);
+//   var check = new Date(c[2], parseInt(c[1])-1, c[0]);
   
-  return (check >= from && check <= to)
-}
+//   return (check >= from && check <= to)
+// }
    
  function CaptainPortal(props)   {
   // const { user,setuser,isl,setisl,setrequest,request,trip,settrip,ac,setac} = props.store;
@@ -54,6 +53,8 @@ function dateCheck(from,to,check) {
 
   const [trip,settrip]=useState(false);
   const [portal,setportal]=useState(false);
+  const [total,settotal]=useState(false);
+
   const [gettripOnce,setgettripOnce]=useState(false);
   const [isserverErr,setisserverErr]=useState(false);
   const [refresh,setrefresh]=useState(false);
@@ -70,13 +71,17 @@ function dateCheck(from,to,check) {
   let acceptedTrips=0;
   let totalTrips=0;
   let totalcompletetrip=0.00     //in a week
-  let totalearn=0.00            //20 person deliverit ka nikla kr
-  let finaltotalearn=0.00      //total kamaya ktna cash me without cuts tax
-  let companyearn=0.00
+  let totalearn=0.00           //total kamaya ktnacmplt trips without cuts tax 
+  let finaltotalearn=0.00     //20 person deliverit ka   ktna hwa cmplt trips me se
+ 
+  let totalCancelEarn=0.00;
+
+   let companyearn=0.00
+  
   let cutPercent=20        
   
   let cancelTrips=0.00;
-  let totalCancelEarn=0.00;
+
   let totalCancelCut=0.00;
 
   let fulltripDetail=[];
@@ -91,9 +96,49 @@ function dateCheck(from,to,check) {
   let time=0;  //avaialabe hourse base on week cycle
 
  const onLogout=()=>{
-  setCars(false) 
   Logout();
  }
+
+ const getTotal=(sd,ed)=>{
+  
+  const bodyData=false
+  const header=authToken;
+  const uid=user._id
+  let route = uid+"&start="+moment(sd).format("Y-M-D")+"&end="+moment(ed).format("Y-M-D")
+
+  
+  // method, path, body, header
+  db.api.apiCall("get",db.link.gettotaltripCalculationwithDate+route,bodyData,header)
+  .then((response) => {
+      
+       console.log("getTotalwithDate response : " , response);
+      
+
+       if(response.data.length<=0){
+        // utils.AlertMessage("", response.message ) ;
+           settotal(false)
+       }
+
+      //  if(!response.message=="No records found"){
+      //    settotal(false)
+      //   return;
+      //  }
+  
+  
+       if(response.data.length>0){
+        settotal(response.data[0])
+       return;
+       }
+    
+     
+       return;
+   
+  }).catch((e) => {
+    settotal(false)
+     console.error("getTotalwithDate catch error : ", e)
+    return;
+  })
+}
 
  const getPortal=(sd,ed)=>{
   
@@ -101,6 +146,8 @@ function dateCheck(from,to,check) {
   const header=authToken;
   const uid=user._id
   let route = uid+"&start="+moment(sd).format("Y-M-D")+"&end="+moment(ed).format("Y-M-D")
+
+  console.log(db.link.getportalwithDate+route)
 
   // method, path, body, header
   db.api.apiCall("get",db.link.getportalwithDate+route,bodyData,header)
@@ -114,7 +161,7 @@ function dateCheck(from,to,check) {
         setportal(false)
        }
 
-       if(!response.message=="No records found"){
+       if(response.message=="No records found"){
          setportal(false)
         return;
        }
@@ -129,7 +176,7 @@ function dateCheck(from,to,check) {
        return;
    
   }).catch((e) => {
-     
+    setportal(false)
      console.error("getportalwithDate catch error : ", e)
     return;
   })
@@ -138,7 +185,9 @@ function dateCheck(from,to,check) {
 const getTrips=(sd,ed)=>{
        
       setloader(true);
-      setisserverErr(false)
+      setisserverErr(false);
+      setgettripOnce(false)
+      settrip(false)
       const bodyData=false
       const header=authToken;
       const uid=user._id
@@ -160,19 +209,56 @@ const getTrips=(sd,ed)=>{
 
            if(!response.data){
             utils.AlertMessage("", response.message ) ;
+            setgettripOnce(false)
             return;
            }
       
       
            if(response.data){
             getPortal(sd,ed)
+            getTotal(sd,ed)
+            setgettripOnce(true)
+
             if(response.data=="No record found"){
               settrip([]);
               return;
             }
-              
-              settrip(response.data)
-           return;
+
+            if(response.data.length>0){
+
+              let arr=[];
+    
+              response.data.map((e,i,a)=>{
+ 
+               let c= e.status.filter(obj => {
+              return (obj.status === "cancelled" || obj.status === "ended" ) ? true :false
+              })
+            
+           
+              if(c.length>0){
+                arr.push(e)
+               }
+    
+              })
+    
+              let tr=[];
+    
+              if(arr.length>0){
+                tr =arr.sort((a, b) => {
+                  var timeA = b.createdAt;
+                  var timeB = a.createdAt;             
+                  return (moment(timeA)).diff(moment(timeB)) 
+                  });
+              }else{
+                           tr=arr
+              }
+               
+    
+              settrip(tr);
+              return;
+              }
+
+  
            }
         
          
@@ -180,7 +266,9 @@ const getTrips=(sd,ed)=>{
        
       }).catch((e) => {
           setloader(false);
-          setisserverErr(true)
+          settrip(false)
+          setisserverErr(true);
+          setgettripOnce(false)
          console.error("getTripsbydate catch error : ", e)
         return;
       })
@@ -188,43 +276,15 @@ const getTrips=(sd,ed)=>{
 
 useEffect(() => {
  if(refresh){
-   setloader(false);setgettripOnce(false);setisserverErr(false);settrip(false);setrefresh(false);
+   setloader(false);setgettripOnce(false);setisserverErr(false);
+   settrip(false);setportal(false);settotal(false);
+    setrefresh(false);
  }
 }, [refresh])
 
  
   useEffect(() => {
-
-totalTrips=0;
-totalcompletetrip=0.00     //in a week
-cancelTrips=0.00;
-acceptedTrips=0;
-
-earn=0.00;                  //sara kch mila kr ktna kamaya deliver it ka tax cut kr or jo be cut ho ra   or jo extra kamaya wo be
-totalearn=0.00            //20 person deliverit ka nikla kr
-finaltotalearn=0.00      //total kamaya ktna cash me without cuts tax
-companyearn=0.00
-cutPercent=20        
-
-
-totalCancelEarn=0.00;
-totalCancelCut=0.00;
-
-fulltripDetail=[];
-
-paidearn=90
-cutearn=40
-
-acceptanceRate="---"
-completionRate="---"
-captainRating="---"
-
-time=0;  //avaialabe hourse base on week cycle
-
-
-settrip(false);
-setportal(false)
-    
+ 
      let sd=moment().add(weeknum, 'weeks').startOf('week');
      let ed=moment().add(weeknum, 'weeks').endOf('week');
      setstartDate(sd);
@@ -236,7 +296,7 @@ setportal(false)
        }
      }
    
-  }, [weeknum,isInternet,refresh])
+  }, [weeknum,isInternet,refresh,gettripOnce])
 
   
   const renderTitle=()=>{
@@ -283,8 +343,7 @@ return(
       </View>
     )
       }
-
-
+ 
 const renderGeneralDetail=()=>{
   
 return(
@@ -351,49 +410,57 @@ return(
 }
 
 const changeWeek=(c)=>{
-  totalTrips=0;
-  totalcompletetrip=0.00     //in a week
-  cancelTrips=0.00;
-  acceptedTrips=0;
+ 
   
-  earn=0.00;                  //sara kch mila kr ktna kamaya deliver it ka tax cut kr or jo be cut ho ra   or jo extra kamaya wo be
-  totalearn=0.00            //20 person deliverit ka nikla kr
-  finaltotalearn=0.00      //total kamaya ktna cash me without cuts tax
-  companyearn=0.00
-  cutPercent=20        
-  
-  
-  totalCancelEarn=0.00;
-  totalCancelCut=0.00;
-  
-  fulltripDetail=[];
-  
-  paidearn=90
-  cutearn=40
-  
-  acceptanceRate="---"
-  completionRate="---"
-  captainRating="---"
-  
-  time=0;  //avaialabe hourse base on week cycle
-  
+totalTrips=0;
+totalcompletetrip=0.00     //in a week
+cancelTrips=0.00;
+acceptedTrips=0;
+
+earn=0.00;                  //sara kch mila kr ktna kamaya deliver it ka tax cut kr or jo be cut ho ra   or jo extra kamaya wo be
+totalearn=0.00            //20 person deliverit ka nikla kr
+finaltotalearn=0.00      //total kamaya ktna cash me without cuts tax
+companyearn=0.00
+cutPercent=20        
+
+
+totalCancelEarn=0.00;
+totalCancelCut=0.00;
+
+fulltripDetail=[];
+
+paidearn=90
+cutearn=40
+
+acceptanceRate="---"
+completionRate="---"
+captainRating="---"
+
+time=0;  //avaialabe hourse base on week cycle
+
+
+settrip(false);
+setportal(false);
+settotal(false);
+   
+
   let chk=c=="add"?weeknum+1:weeknum-1
   setweeknum(chk); 
   setgettripOnce(false)
 
 }
 
-function secondsToHms(d) {
-  d = Number(d);
-  var h = Math.floor(d / 3600);
-  var m = Math.floor(d % 3600 / 60);
-  var s = Math.floor(d % 3600 % 60);
+// function secondsToHms(d) {
+//   d = Number(d);
+//   var h = Math.floor(d / 3600);
+//   var m = Math.floor(d % 3600 / 60);
+//   var s = Math.floor(d % 3600 % 60);
 
-  var hDisplay = h > 0 ? h + (h == 1 ? " h, " : " h, ") : "";
-  var mDisplay = m > 0 ? m + (m == 1 ? " m, " : " m, ") : "";
-  var sDisplay = s > 0 ? s + (s == 1 ? " s" : " s") : "";
-  return hDisplay + mDisplay + sDisplay; 
-}
+//   var hDisplay = h > 0 ? h + (h == 1 ? " h, " : " h, ") : "";
+//   var mDisplay = m > 0 ? m + (m == 1 ? " m, " : " m, ") : "";
+//   var sDisplay = s > 0 ? s + (s == 1 ? " s" : " s") : "";
+//   return hDisplay + mDisplay + sDisplay; 
+// }
 
 const renderLine=()=>{
   return(
@@ -405,8 +472,7 @@ const renderLine=()=>{
  
   let fontSize=14.5
   let textcolor1= parseFloat(totalearn)>=0 ? "black":"red"
-  let textcolor2= parseFloat(totalCancelEarn)>=0 ? "black":"red"
-
+  let textcolor2="black"
 return(
  <View style={{borderColor:bc,borderWidth:bw,borderRadius:br}}>
 
@@ -419,7 +485,7 @@ return(
       x {totalcompletetrip}
     </theme.Text>
     <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:textcolor1,fontFamily:theme.fonts.fontMedium,width:"58%" ,lineHeight:20,textTransform:"uppercase",textAlign:"right"}}> 
-     PKR {parseFloat(totalearn).toFixed(2)}
+     PKR {parseFloat(totalearn).toFixed()}
     </theme.Text>
     </View>
 </TouchableOpacity>
@@ -435,7 +501,7 @@ return(
       x {cancelTrips}
     </theme.Text>
     <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:textcolor2,fontFamily:theme.fonts.fontMedium,width:"58%" ,lineHeight:20,textTransform:"uppercase",textAlign:"right"}}> 
-     PKR {parseFloat(totalCancelEarn).toFixed(2)}
+     PKR {parseFloat(totalCancelEarn).toFixed()}
     </theme.Text>
     </View>
 </TouchableOpacity>
@@ -451,7 +517,7 @@ return(
       x {totalcompletetrip}
     </theme.Text>
     <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:"red",fontFamily:theme.fonts.fontMedium,width:"58%" ,lineHeight:20,textTransform:"uppercase",textAlign:"right"}}> 
-     - PKR {parseFloat(finaltotalearn).toFixed(2)}
+     PKR {parseFloat(finaltotalearn).toFixed()}
     </theme.Text>
     </View>
 </TouchableOpacity>
@@ -464,7 +530,7 @@ return(
     Total
     </theme.Text>
     <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:"black",fontFamily:theme.fonts.fontMedium,width:"58%" ,lineHeight:20,textTransform:"uppercase",textAlign:"right"}}> 
-     PKR {parseFloat(earn).toFixed(2)}
+     PKR {parseFloat(earn).toFixed()}
     </theme.Text>
     </View>
 </TouchableOpacity>
@@ -477,7 +543,8 @@ return(
    //siraf wo detail show hn gi jo end trip wali hn gi yani collectcash ya end ride true
    let fontSize=12
    let textcolor2= "red"
-
+  
+ 
    const  t=trip.map((e,i,a)=>{
    
     let status=e.status[e.status.length-1].status
@@ -488,9 +555,37 @@ return(
     var date =  moment(e.createdAt).format("ddd D MMM");   //9 july 2021
     let createdAt= date+", "+t
     let tid=e.t_id   //trip id
-    let rent=e.rent  //total amount in trip
+    let rent=0  //total amount in trip
    
-    let T=status=="cancelled"?"Trip Cancel":"Trip"
+    if(status=="ended"){rent=e.rent}
+
+    let statuss=status=="ended"?"complete":status
+    let statusColor= "gray"
+    let rentColor= "green"
+    
+    if( status=="cancelled"){
+    
+      if(e.amt_paid==0){rentColor="gray"}
+
+      if(e.cancelled_by=="captain" ){
+        if(e.amt_paid>0){
+          rentColor="green";
+          rent=e.amt_paid
+        }
+        if(e.amt_paid<0){
+          rentColor="red"
+          rent=e.amt_paid
+        }
+      }
+
+      if(e.cancelled_by=="customer" ){
+        if(e.amt_paid>0 ){
+          rentColor="green";
+          rent=e.amt_paid 
+        }
+      }
+      
+    }
  
     return(
       <View> 
@@ -503,12 +598,15 @@ return(
     <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:"black",lineHeight:18,textTransform:"uppercase"}}> 
      {createdAt}
     </theme.Text>
-    <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:"gray" ,lineHeight:15 }}> 
-      {T} {tid}
+    <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:"gray",lineHeight:15 }}> 
+      Trip {tid}
+    </theme.Text>
+    <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:statusColor,textTransform:"capitalize",lineHeight:15 }}> 
+     {statuss} {e.cancelled_by}
     </theme.Text>
     </View>
-    <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:textcolor1,width:"40%" ,lineHeight:20,textAlign:"right",textTransform:"uppercase"}}> 
-    {rent}
+    <theme.Text numberOfLines={1} ellipsizeMode="tail"  style={{fontSize:fontSize,color:rentColor,width:"40%" ,lineHeight:20,textAlign:"right",textTransform:"uppercase"}}> 
+     {rent}
     </theme.Text>
     </View>
     {/* {e.normalPay==true&&(
@@ -609,12 +707,18 @@ return(
   )
 }
  
-if(portal){
+if(portal&&total){
 
 totalTrips=portal.offered_trips
 totalcompletetrip=portal.completed_trips;
 cancelTrips=portal.canceled_trips;
 acceptedTrips=portal.accepted_trips
+
+ totalearn=(total.total_completed_trips).toFixed()        //complt trip ka total without cut company  tax  
+ finaltotalearn=-Math.abs(((cutPercent/100)*totalearn).toFixed())   //cplt trip me se cmpny ka ktna hwa                     
+ totalCancelEarn=total.total_cancelled_trips_bycaptain + total.total_cancelled_trips_bycustomer
+ earn=parseInt(totalearn)+parseInt(finaltotalearn)+parseInt(totalCancelEarn)
+
 
 //captain rating
 captainRating=portal.rating.toFixed(1)
@@ -623,16 +727,19 @@ let t= 100/totalTrips
 let ar= parseFloat(acceptedTrips*t).toFixed(1)
  acceptanceRate=ar
 //get completion rate
-let tt= 100/(acceptedTrips)  //acpt trip se minus ho gi wo trip jo user ne cancel ke
+let tt= 100/(acceptedTrips-total.count_cancelled_trips_bycustomer)  //acpt trip se minus ho gi wo trip jo user ne cancel ke
 let cr= parseFloat(totalcompletetrip*tt).toFixed(1)
 completionRate=cr
-
 }
-
+ 
+// console.log("trip : ",trip)
+// console.log("portal : ",portal)
+  //  console.log("total : ",total)
  
   return(
  <SafeAreaView style={styles.container}>
  <utils.DrawerHeader p={props} title="" />
+ {!isInternet && !isserverErr && !loader  && trip!=false && <utils.TopMessage msg="No internet connection ! "/> } 
  {!isInternet && !isserverErr && (!trip) && !loader && renderInternetErr()} 
  <ScrollView showsVerticalScrollIndicator={false}   >
  {renderTitle()}
@@ -641,7 +748,7 @@ completionRate=cr
 {isserverErr   && !loader && renderServerErr()}
 {loader && <ActivityIndicator style={{marginTop:100,alignSelf:"center"}} size={25} color={theme.color.buttonLinerGC1} />}
 
-{!loader && trip && trip.length>0 && !isserverErr &&(
+{!loader && trip && trip.length>0 && portal && total && !isserverErr &&(
    <View>
  {rendertripPayDetail()}
  {rendertripDetail()}

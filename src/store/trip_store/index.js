@@ -188,7 +188,11 @@ constructor(){
              }
     
              if(response.data){
-           this.setar(response.data[0].ratingAvg)
+               if(response.data.length>0){
+                this.setar(response.data[0].ratingAvg);
+                return;
+               }
+               this.setar(response.data.ratingAvg);
              }
           
              return;

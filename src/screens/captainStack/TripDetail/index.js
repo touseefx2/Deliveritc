@@ -11,23 +11,52 @@ import Modal from 'react-native-modal';
 import {AutoGrowingTextInput} from 'react-native-autogrow-textinput';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFetchBlob from 'rn-fetch-blob'
+import db from "../../../database/index" 
 
-
-  let  paidearn=90
-  let  cutearn=50
+ 
   let cutPercent=20  
 
   const audioRecorderPlayer =   new AudioRecorderPlayer();
+  function ieo(obj){
+    //check object is empty or not
+    return JSON.stringify(obj) === '{}';
+  }
+   
 
+  export default inject("userStore","generalStore","carStore","tripStore")(observer(TripDetail));
 
-export default inject("store")(observer(TripDetail));
- 
  function TripDetail(props)   {
-  const { user,setuser,setcl,cl,isl,setisl,setrequest,request,trip,settrip,cars,changetrip} = props.store;
+  //  const {  trip,changetrip} = props.store;
+
+  let trip=[]
+
+  const {e} =props.route.params;  //trip
+
+
+  const {user,authToken,setUser,setcl,cl,Logout,setonline} = props.userStore;
+  const {cars,setCars} =  props.carStore;
+  const {setrequest,accept,request,getReqById,setatime,setaccept,getreqloader,setgetreqloader,gro,setgro,endride} = props.tripStore;
+  const {setLocation,isLocation,isInternet} = props.generalStore;
+
+
+
+  const [dispute,setdispute]=useState("null")
+  const [getdispOnce,setgetdispOnce]=useState(false);
+  
+  const [trnsctn,settrnsctn]=useState(false)
+ 
+
+  const [isserverErr,setisserverErr]=useState(false);
+  const [refresh,setrefresh]=useState(false);
+  const [l,setl]=useState(false);
+
   const [loader,setloader]=useState(false);
   const [dispmodal,setdispmodal]=useState(false);
 
   const [ad,setad]=useState(false);  //arow down
+
+  const [ada,setada]=useState(false);  //arow down audio
+
 
   const [sm,setsm]=useState("Total distance is incorrect");  //select msg
  
@@ -35,23 +64,17 @@ export default inject("store")(observer(TripDetail));
  
   const [isrs,setisrs]=useState(false);  //is record is start
 
-  const {e}=props.route.params;
-
+  
   let message1="Total distance is incorrect"
   let message2="I will explain it with text/voice recording"
 
 
   const [audio,setaudio]=useState("");  //select msg
-  const [paudio,setpaudio]=useState("");  //select msg
+  const [paudio,setpaudio]=useState("");  //select msg   //play/pause audio
 
   const [comment,setcomment]=useState("");  //select msg
 
 
- useEffect(() => {
-    if(!dispmodal){
-    clearall()
-    }
- }, [dispmodal])
  
  useEffect(() => {
   
@@ -61,6 +84,24 @@ export default inject("store")(observer(TripDetail));
    
  }, [paudio])
 
+ useEffect(() => {
+  if(refresh){
+     setl(false);setgetdispOnce(false);setisserverErr(false);
+     setdispute("null");settrnsctn(false)
+     setrefresh(false);
+  }
+ }, [refresh])
+  
+   useEffect(() => {
+      
+       if(isInternet&&!refresh){
+        if(!getdispOnce){
+          getDispute()
+          }
+      }
+    
+   }, [isInternet,refresh,getdispOnce])
+  
  const clearaudio=()=>{
    setaudio("");
    setpaudio("");
@@ -71,13 +112,185 @@ export default inject("store")(observer(TripDetail));
  }
 
 const clearall=()=>{
+  stopAudio()
   clearaudio();
   setsm(message1)
   setcomment("")
   setad(false)
-  sets("")
+  setada(false)
+  sets("");
+  setdispmodal(!dispmodal);
+
 }
+
+const onLogout=()=>{
+  setCars(false) 
+  Logout();
+ }
+
+ const onFileUpload=(method,bodyData,header)=>{
  
+  setl(true)
+  db.api.apiCall(method,db.link.uploadFile,bodyData,header)
+  .then((response) => {
+    setl(false);
+    console.log("uploadFile response : " , response);
+  
+  if(response){
+   addDispute(response)
+   return;
+   }else{   
+    utils.AlertMessage("","Error upload file")
+     return;
+   }
+ 
+}).catch((e) => {
+setl(false);
+// utils.AlertMessage("","Network request failed");
+console.error("uploadFile  catch error : ", e)
+return;
+})
+
+}
+
+const addDispute=(file)=>{
+   setl(true)
+  
+  const bodyData={
+     trip:e._id,
+     message:sm==message1?sm:comment,
+     sender:user.user_role,
+     audio:sm==message2?file:""
+    
+}
+  const header=authToken;
+ 
+  // method, path, body, header
+  db.api.apiCall("post",db.link.addTripDispute,bodyData,header)
+  .then((response) => {
+       setl(false);
+       
+         console.log("addTripDispute response : " , response);
+    
+         if(response.msg=="Invalid Token"){
+           utils.AlertMessage("",response.msg) ;
+           onLogout()
+          return;
+         }
+
+         if(!response.success){
+          utils.AlertMessage("",response.message) ;
+           return;
+         }
+  
+
+         if(response.success){
+          setdispute(response.data);
+          utils.ToastAndroid.ToastAndroid_SB("Submit Success !")
+          clearall();
+           return;
+         }
+
+       return;
+   
+  }).catch((e) => {
+      setl(false);
+     console.error("addTripDispute catch error : ", e)
+    return;
+  })
+}
+
+const getDispute=()=>{
+       
+  setl(true);
+  setisserverErr(false);
+  setgetdispOnce(false);
+
+  const bodyData=false
+  const header=authToken;
+  const tid=e._id
+ 
+  // method, path, body, header
+  db.api.apiCall("get",db.link.getTripDispute+tid,bodyData,header)
+  .then((response) => {
+       setl(false);
+       setisserverErr(false);
+
+       console.log("getTripDispute response : " , response);
+    
+         if(response.msg=="Invalid Token"){
+           utils.AlertMessage("",response.msg) ;
+           onLogout()
+          return;
+         }
+
+       if(!response.data){
+        setgetdispOnce(false)
+        setdispute("null");
+        return;
+       }
+  
+  
+       if(response.data){  
+        getTransaction()
+        
+        if(response.data.length>0)
+        setdispute(response.data[0]);
+        else
+        setdispute(response.data);
+       
+        setgetdispOnce(true)
+         return;
+       }
+    
+     
+       return;
+   
+  }).catch((e) => {
+      setl(false);
+      setisserverErr(true)
+      setdispute("null")
+      setgetdispOnce(false)
+     console.error("getTripDispute catch error : ", e)
+    return;
+  })
+}
+
+const getTransaction=()=>{
+ 
+  const bodyData=false
+  const header=authToken;
+  const tid=e._id
+ 
+  db.api.apiCall("get",db.link.getTripTransctionHistory+tid,bodyData,header)
+  .then((response) => {
+      
+       console.log("getTripTransctionHistory response : " , response);
+        
+       if(!response.data){
+        settrnsctn(false)
+       }
+
+       if(response.message=="No records found"){
+        settrnsctn(false)
+         return;
+      }
+  
+       if(response.data){  
+        settrnsctn(response.data[0]);
+         return;
+       }
+    
+     
+       return;
+   
+  }).catch((e) => {
+     settrnsctn(false)
+     console.error("getTripTransctionHistory catch error : ", e)
+    return;
+  })
+}
+
   const Sep=()=>{
     return  <View style={{height:10}} />
   }
@@ -101,7 +314,7 @@ const clearall=()=>{
     const result = await  audioRecorderPlayer.startRecorder(path);
     sets(result)
     setisrs(true)
-    console.log("start rec : ",result);
+    // console.log("start rec : ",result);
 
   }
 
@@ -111,10 +324,10 @@ const clearall=()=>{
       if(result!=="Already stopped"){setaudio(result);}
       setpaudio("")
       setisrs(false)
-      console.log("stop rec : ",result);
+      // console.log("stop rec : ",result);
   }
 
-  const playAudio= async(p)=>{
+  const PlayAud=async (p)=>{
     let msg;
     if(p!=""){
       msg = await  audioRecorderPlayer.startPlayer(p);
@@ -130,82 +343,76 @@ const clearall=()=>{
       return;
     });
     setpaudio("play") 
-    console.log("play  : ",msg);
+    // console.log("play  : ",msg);
+  }
+
+  const playAudio= async(p)=>{
+  
+  if(dispute.length<=0 ){
+    PlayAud(p)
+  }else{
+if(isInternet){
+  PlayAud(p)
+}else{
+  utils.AlertMessage("","Please connect internet !")
+}
+  }
+  
+
   }
 
   const pauseAudio=async()=>{
     const msg = await  audioRecorderPlayer.pausePlayer()
     setpaudio("pause") 
-    console.log("pause : ",msg);
+    // console.log("pause : ",msg);
   }
 
   const stopAudio=async()=>{
     const msg = await  audioRecorderPlayer.stopPlayer();
     audioRecorderPlayer.removePlayBackListener()
     setpaudio("") 
-    console.log("stop : ",msg);
+    // console.log("stop : ",msg);
   }
 
   const YesClickSubmit=()=>{
  
-    if(sm==message1){
-      setloader(true);
-   
-      setTimeout(() => {
-        
+    if(isInternet){
 
-        if(trip.length>0){
-          trip.map((ee,i,a)=>{
-          if(e.id==ee.id && e.captainid==ee.captainid && e.captaincarid ==ee.captaincarid){
-            const obj={
-              comment:sm,
-                audio:""
-            }
-            changetrip(i,obj);
-            }
-          })
-        }
-   
-         setloader(false);
-        clearall();
-        setdispmodal(false)
-        utils.ToastAndroid.ToastAndroid_SB("Submit Success !")
-      }, 1200);
-   
-    }
-  
-    if(sm==message2){
-  
-      if(audio!=="" || comment!=="")
-  {
-    setloader(true);
-    setTimeout(() => {
-
-
-      if(trip.length>0){
-        trip.map((ee,i,a)=>{
-        if(e.id==ee.id && e.captainid==ee.captainid && e.captaincarid ==ee.captaincarid){
-          const obj={
-            comment:comment,
-              audio:audio
-          }
-          changetrip(i,obj);
-          }
-        })
+      if(sm==message1){
+      addDispute("");
+      return;
       }
-  
-      setloader(false);
-      clearall();
-      setdispmodal(false)
-      utils.ToastAndroid.ToastAndroid_SB("Submit Success !")
-    }, 1200);
     
-  }else{
-    
-    utils.AlertMessage("","Please enter comment or record audio")
-  }
-    
+      if(sm==message2){
+       if(audio=="" && comment==""){
+         utils.AlertMessage("","Please enter comment or record audio");
+         return;
+       } 
+
+       if(audio!=""){
+       
+        const bodyData = new FormData();
+        const newFile = {
+           uri:audio,
+           type:"audio/mp3",
+           name:"rec.mp3",
+        }
+        bodyData.append('files', newFile)
+        const header="upload" 
+
+         onFileUpload("post",bodyData,header)
+         
+         return;
+       }
+
+       addDispute("");
+
+       }
+
+    }else{
+      utils.AlertMessage("","Please connect internet !")
     }
+   
   
   }
 
@@ -229,12 +436,12 @@ const SubmitClick=()=>{
 }
 
 const renderButton=()=>{
-  let msg=(e.captainTripDispute.comment==""&&e.captainTripDispute.audio=="")?"Dispute":"View Dispute"
+   let msg=dispute.length<=0?"Dispute":"View Dispute"
   return(
     <TouchableOpacity onPress={()=>{setdispmodal(!dispmodal)}} style={styles.BottomButton}>
     <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
             <View style={styles.ButtonRight}>
-              {loader==false&&(<Text style={styles.buttonText}>{msg}</Text>)}
+             {loader==false&&(<Text style={styles.buttonText}>{msg}</Text>)}
              {loader&&(<ActivityIndicator size={25} color={"white"} />)}
              </View>
      </LinearGradient>
@@ -245,12 +452,10 @@ const renderButton=()=>{
 const renderButtonDispute=()=>{
   return(
     <TouchableOpacity 
-   
     onPress={()=>{SubmitClick()}} style={styles.BottomButton}>
     <LinearGradient colors={[theme.color.buttonLinerGC1,theme.color.buttonLinerGC2]} style={styles.LinearGradient}>
             <View style={styles.ButtonRight}>
-            {loader==false&&(<Text style={styles.buttonText}>Submit</Text>)}
-             {loader&&(<ActivityIndicator size={25} color={"white"} />)}
+             <Text style={styles.buttonText}>Submit</Text> 
              </View>
      </LinearGradient>
      </TouchableOpacity>
@@ -276,38 +481,58 @@ const renderdetail=()=>{
     var date =  moment(e.createdAt).format("ddd D MMM");   //9 july 2021
     let createdAt= date+", "+t
 
-    let tt= e.normalPay==true?"Cash Trip Payment"          //tranctn type
-            :e.normalPay==true?"Card Payment"
-            :""  
-
-   let amount= e.cancelStatus=="Paid"?parseFloat(paidearn).toFixed(2):e.cancelStatus=="unPaid"?"0.00":e.cancelStatus=="unPaidcut"?"- "+parseFloat(cutearn).toFixed(2):"0.00"    /// cancel k case me  amount   
+    let pymntm=e.payment_mode
  
-   let waitingTime=   secondsToHms(e.wait_time)
+  //  let waitingTime=   e.waiting_time
 
-   let cancelmsg=e.cancelStatus=="unPaid"?"Cancel before grace time":"Cancel after grace time"
+   let cancelmsg=e.cancellation_reason
  
-   let startridetime=""
-   let endridetime=""
-  let estimateTime=""
-   if(e.endride==true){
-    var  t =  moment(e.startRideTime).format('hh:mm a')  
-    var date =  moment(e.startRideTime).format("ddd D MMM");   //9 july 2021
+ 
+   let amount= 0;
+
+   let status=e.status[e.status.length-1].status
+
+   let cc=0;  //colect cash
+
+   if(pymntm=="cash"&& status=="ended" && trnsctn){
+    if(trnsctn.debit==0 && trnsctn.credit==0){
+      cc=e.rent;
+    }
+    if(trnsctn.debit>0){
+      cc=e.rent+trnsctn.debit;
+ 
+    }
+    if(trnsctn.credit>0){
+      cc=e.rent-trnsctn.credit;
+    }
+   }
+
+   if(status=="ended"){amount=e.rent}
+   if(status=="cancelled"){amount=e.amt_paid}
+ 
+ 
+  let startridetime=""
+  let endridetime=""
+ 
+   if(status=="ended"){
+
+   
+    var  t =  moment(e.start_time).format('hh:mm a')  
+    var date =  moment(e.start_time).format("ddd D MMM");   //9 july 2021
     startridetime= t
 
-    var  t =  moment(e.endRideTime).format('hh:mm a')  
-    var date =  moment(e.endRideTime).format("ddd D MMM");   //9 july 2021
-    endridetime=  t
-
-    estimateTime=secondsToHms(e.total_time)
+    var  tt=  moment(e.end_time).format('hh:mm a')  
+    var date =  moment(e.end_time).format("ddd D MMM");   //9 july 2021
+    endridetime=  tt
+ 
    }
-   
-
+  
 return(
 <View style={{marginTop:40}}>
  
 <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Booking ID</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{e.id}</theme.Text>
+ <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Trip ID</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{e.t_id}</theme.Text>
  </View>
 
  {Sep()}
@@ -321,7 +546,7 @@ return(
 
 
 
-{(e.status!="cancel" && e.status!=="skip" && e.status!=="reject" && e.endride==true) &&(
+{(status=="ended") &&(
   <View>
 
  {Sep()}
@@ -330,7 +555,7 @@ return(
 
  <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
  <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"30%"}}>Pickup location</theme.Text>
- <theme.Text numberOfLines={5} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"60%"}}>{e.pickupLocation.name}</theme.Text>
+ <theme.Text numberOfLines={5} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"60%"}}>{e.pickup.name}</theme.Text>
  </View>
 
  {Sep()}
@@ -339,19 +564,9 @@ return(
 
  <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
  <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"30%"}}>Dropoff location</theme.Text>
- <theme.Text numberOfLines={5} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"60%"}}>{e.dropoffLocation.name}</theme.Text>
+ <theme.Text numberOfLines={5} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"60%"}}>{e.dropoff.name}</theme.Text>
  </View>
-
- {Sep()}
- {SepLine()}
- {Sep()}
-
- <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"30%"}}>Waiting time</theme.Text>
- <theme.Text numberOfLines={5} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"60%"}}>{waitingTime}</theme.Text>
- </View>
-
-
+ 
  {Sep()}
  {SepLine()}
  {Sep()}
@@ -376,7 +591,17 @@ return(
 
  <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
  <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Total distance</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{e.total_distance}</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{e.distance.toFixed(2)} km</theme.Text>
+ </View>
+
+  
+ {Sep()}
+ {SepLine()}
+ {Sep()}
+
+ <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
+ <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Payment mode</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{pymntm}</theme.Text>
  </View>
 
  {Sep()}
@@ -384,94 +609,94 @@ return(
  {Sep()}
 
  <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Estimate time</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{estimateTime}</theme.Text>
+ <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Rent</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>PKR {amount.toFixed()}</theme.Text>
  </View>
 
- {Sep()}
- {SepLine()}
- {Sep()}
+ {pymntm=="cash"&&(
+    <View>
+  {Sep()}
+  {SepLine()}
+  {Sep()}
+  
+   <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
+   <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Collect Cash</theme.Text>
+   <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>PKR {cc.toFixed()}</theme.Text>
+   </View>
+  
+   {trnsctn.debit>0&&(
+     <View>
+  {Sep()}
+  {SepLine()}
+  {Sep()}
+   <View style={{flexDirection:"row",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
+   <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"25%"}}>Remaining</theme.Text>
+   <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"70%"}}>PKR {trnsctn.debit.toFixed()} has added to customer wallet</theme.Text>
+   </View>
+     </View>
+   )}
+  
+  {trnsctn.credit>0&&(
+     <View>
+  {Sep()}
+  {SepLine()}
+  {Sep()}
+   <View style={{flexDirection:"row",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
+   <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"25%"}}>Remaining</theme.Text>
+   <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"70%"}}>PKR {trnsctn.credit.toFixed()} has cut from customer wallet</theme.Text>
+   </View>
+     </View>
+   )}
+  
+  
+    </View>
+  )}
 
- <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Transaction type</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{tt}</theme.Text>
- </View>
 
- {Sep()}
- {SepLine()}
- {Sep()}
-
- <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Collect cash</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{parseFloat(e.collectcash).toFixed(2)} PKR</theme.Text>
- </View>
-
- {Sep()}
- {SepLine()}
- {Sep()}
-
- <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Total amount </theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{parseFloat(e.rs).toFixed(2)} PKR</theme.Text>
- </View>
-
- {Sep()}
- {SepLine()}
- {Sep()}
-
- <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Captain earnings</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{parseFloat(e.rs - ((cutPercent/100)*(e.rs ))).toFixed(2)} PKR</theme.Text>
- </View>
-
+ 
   </View>
 )}
 
   
-{(e.status=="cancel" ) &&(
+{(status=="cancelled" ) &&(
   <View>
-
  {Sep()}
  {SepLine()}
  {Sep()}
 
  <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
  <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Status</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{e.status}</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%",textTransform:"capitalize"}}>{status}</theme.Text>
  </View>
 
  {Sep()}
  {SepLine()}
  {Sep()}
 
-{e.cancelStatus=="Paid"&&(
-  <View>
  <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Waiting time</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{waitingTime}</theme.Text>
+ <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Cancel By</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%",textTransform:"capitalize"}}>{e.cancelled_by}</theme.Text>
  </View>
-{Sep()}
-{SepLine()}
-{Sep()}
-  </View>
-)}
 
-{(e.cancelStatus=="unPaid" || "unPaidcut")&&(
+ {Sep()}
+ {SepLine()}
+ {Sep()}
+ 
   <View>
  <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"20%"}}>Detail</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"20%"}}>Reason</theme.Text>
  <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"60%"}}>{cancelmsg}</theme.Text>
  </View>
 {Sep()}
 {SepLine()}
 {Sep()}
   </View>
-)}
+ 
   
  
  <View style={{flexDirection:"row",alignItems:"center",width:"100%",alignSelf:"center",justifyContent:"space-between"}}>
- <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Amount</theme.Text>
- <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>{amount} PKR</theme.Text>
+ <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"40%"}}>Cancellation Fee</theme.Text>
+ <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:fs,color:"black",fontFamily:theme.fonts.fontMedium,textAlign:"right",lineHeight:20,width:"50%"}}>PKR {amount}</theme.Text>
  </View>
 
  
@@ -576,7 +801,7 @@ style={{marginVertical:20}}>
  
 const renderDiputeModal=()=>{
  
-  if((e.captainTripDispute.comment==""&e.captainTripDispute.audio=="")){
+  if((dispute.length<=0 && dispute!="null")){
     return(
       <Modal 
       isVisible={dispmodal}
@@ -603,8 +828,8 @@ const renderDiputeModal=()=>{
   <View style={{padding:10}}>
   
   <View style={{width:"100%",padding:10,alignItems:"center",flexDirection:"row",justifyContent:"space-between",backgroundColor:"white",borderRadius:5,elevation:3}}>
-  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"25%" }}>Booking</theme.Text>
-   <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"72%" }}>{e.id}</theme.Text>
+  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"25%" }}>Trip</theme.Text>
+   <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"72%" }}>{e.t_id}</theme.Text>
   </View>
   
   
@@ -641,16 +866,32 @@ const renderDiputeModal=()=>{
   
     </Modal>
     )
-  }else{
+  }
+  else if(!ieo(dispute) && dispute!="null"){
+
+    let cmnt=""
+    let audio=""
+
+    if(dispute.comments.length>0){
+      dispute.comments.map((e,i,a)=>{
+        if(e.sender==user.user_role){
+         cmnt=e.message;
+         audio=e.audio
+         return;
+        }
+      })
+    }
+
+ 
     return(
       <Modal 
       isVisible={dispmodal}
       style={{flex:1,width:wp("100%"),height:hp("100%"),margin: 0}}
       backdropOpacity={0.6}
       animationInTiming={600}
-      animationOutTiming={600}
-      onRequestClose={() => {setdispmodal(!dispmodal)}}
-      backdropTransitionInTiming={300}
+      animationOutTiming={300}
+      onRequestClose={() => {clearall()}}
+      backdropTransitionInTiming={600}
       backdropTransitionOutTiming={300}>
   
   
@@ -666,16 +907,16 @@ const renderDiputeModal=()=>{
   <View style={{padding:10,alignItems:"center",justifyContent:"center"}}>
   
   <View style={{width:"100%",alignItems:"center",flexDirection:"row",justifyContent:"space-between",backgroundColor:"white",borderRadius:5,elevation:5,padding:5}}>
-  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"25%" }}>Booking</theme.Text>
-   <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"72%" }}>{e.id}</theme.Text>
+  <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"25%" }}>Trip ID</theme.Text>
+   <theme.Text numberOfLines={2} ellipsizeMode="tail" style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,lineHeight:20,width:"72%" }}>{e.t_id}</theme.Text>
   </View>
 
 
-  {e.captainTripDispute.audio!=""&&(
+  {/* {audio!=""&&(
 <View style={{padding:5,backgroundColor:theme.color.buttonLinerGC1,flexDirection:"row", borderRadius:5,alignSelf:"center",width:"60%",flexDirection:"row",alignItems:"center",justifyContent:"space-between",marginTop:30}}>
    
 {paudio==""&&(
-<TouchableOpacity style={{width:"38%" }} onPress={()=>{playAudio(e.captainTripDispute.audio)}}>
+<TouchableOpacity style={{width:"38%" }} onPress={()=>{playAudio(audio)}}>
 <utils.vectorIcon.Entypo  size={25} color="white"  name="controller-play" /> 
 </TouchableOpacity>
 )}
@@ -706,10 +947,66 @@ const renderDiputeModal=()=>{
 </View>
 
   </View>
+)} */}
+
+{audio!=""&&(
+ <View style={{width:"100%",elevation:5,backgroundColor:"white",padding:7,marginTop:40,borderRadius:5,marginBottom:20}}>
+ <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
+  <theme.Text style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,width:"70%"}}>Audio</theme.Text>
+ <TouchableOpacity 
+ onPress={()=>setada(!ada)}
+ style={{width:"20%",alignItems:"center",justifyContent:"center"}}>
+ <utils.vectorIcon.AntDesign name={!ad?"down":"up"} color={theme.color.buttonLinerGC1} size={24} />
+</TouchableOpacity>
+ </View>
+ {ada&&(
+ <View>
+ {Sep()}
+ {SepLine()}
+ {Sep()}
+ {Sep()}
+ <View style={{padding:5,backgroundColor:theme.color.buttonLinerGC1,flexDirection:"row", borderRadius:5,alignSelf:"center",width:"60%",flexDirection:"row",alignItems:"center",justifyContent:"space-between" }}>
+   
+   {paudio==""&&(
+   <TouchableOpacity style={{width:"38%" }} onPress={()=>{playAudio(audio)}}>
+   <utils.vectorIcon.Entypo  size={25} color="white"  name="controller-play" /> 
+   </TouchableOpacity>
+   )}
+   
+   
+     {paudio=="play" &&
+     <View style={{flexDirection:"row",alignItems:"center",width:"38%" }}>
+     <TouchableOpacity onPress={()=>  pauseAudio()}>
+     <utils.vectorIcon.AntDesign    size={22} color="white"   name="pausecircle" />
+     </TouchableOpacity>
+     <TouchableOpacity onPress={()=>{stopAudio()}}>
+   <utils.vectorIcon.Entypo style={{marginLeft:12}}  size={25} color="red"   name="controller-stop" />
+   </TouchableOpacity>
+     </View>}
+   
+     {paudio=="pause" &&
+     <View style={{flexDirection:"row",alignItems:"center",width:"38%" }}>
+    <TouchableOpacity onPress={()=>{playAudio("")}}>
+   <utils.vectorIcon.Entypo  size={25} color="white"  name="controller-play" /> 
+   </TouchableOpacity>
+     <TouchableOpacity onPress={()=>{stopAudio()}}>
+   <utils.vectorIcon.Entypo style={{marginLeft:12}}  size={25} color="red"   name="controller-stop" />
+   </TouchableOpacity>
+     </View>}
+   
+    <View style={{width:"60%" }}>
+   <theme.Text numberOfLines={1} ellipsizeMode="tail" style={{fontSize:13,color:"white",fontFamily:theme.fonts.fontMedium,lineHeight:20 }}>Record.mp3</theme.Text>
+   </View>
+   
+ </View>
+ {Sep()}
+ </View>
+)}
+ </View>
 )}
  
-{e.captainTripDispute.comment!=""&&(
- <View style={{width:"100%",elevation:5,backgroundColor:"white",padding:5,marginTop:30,borderRadius:5,marginBottom:20}}>
+{cmnt!=""&&(
+ <View style={{width:"100%",elevation:5,backgroundColor:"white",padding:7,borderRadius:5,marginBottom:20}}>
  <View style={{flexDirection:"row",alignItems:"center",justifyContent:"space-between"}}>
   <theme.Text style={{fontSize:15,color:"black",fontFamily:theme.fonts.fontMedium,width:"70%"}}>Comment</theme.Text>
  <TouchableOpacity 
@@ -721,11 +1018,10 @@ const renderDiputeModal=()=>{
  {ad&&(
  <View>
  {Sep()}
- {Sep()}
  {SepLine()}
  {Sep()}
  {Sep()}
- <theme.Text style={{fontSize:13,color:"black",lineHeight:25 }}>{e.captainTripDispute.comment}</theme.Text>
+ <theme.Text style={{fontSize:13,color:"black",lineHeight:25 }}>{cmnt}</theme.Text>
  {Sep()}
  </View>
 )}
@@ -745,19 +1041,39 @@ const renderDiputeModal=()=>{
 
 
 }
+ 
+const renderInternetErr=()=>{
+  return <Text style={{position:"absolute",top:"45%",color:"grey",fontSize:15,alignSelf:"center"}}>No internet connection !</Text>
+}
 
+const renderServerErr=()=>{
+ return  (
+   <View style={{marginTop:"40%"}}>
+   <Text style={{color:"grey",fontSize:15,alignSelf:"center",marginBottom:5}}>Server not respond !</Text>
+   <TouchableOpacity   onPress={()=>{ if(isInternet){setrefresh(true)}else{utils.AlertMessage("","Please connect internet !")} }}>
+   <Text  style={{color:theme.color.buttonLinerGC1,fontSize:15,textDecorationLine:"underline",alignSelf:"center"}}>Retry</Text>
+   </TouchableOpacity>
+   </View>
+ )
+}
  
   return(
  <SafeAreaView style={styles.container}>
    {renderDiputeModal()}
+  <utils.Loader  loader={l} />
+  {!isInternet && !isserverErr && (dispute=="null") && !l && renderInternetErr()} 
  <utils.StackHeader p={props} title="Trip Detail" /> 
+ {!isInternet && !isserverErr && !l  && dispute!=="null" && <utils.TopMessage msg="No internet connection ! "/> } 
  <ScrollView style={{}}>
- <View style={{padding:10}}> 
+ {isserverErr   && !l && renderServerErr()}
+ {!l && dispute!="null"  && !isserverErr &&(
+  <View style={{padding:10}}> 
  {renderdetail()}   
  </View>
+ )}
  </ScrollView>
  <View style={{padding:10}}>
- {renderButton()}
+ {!l && dispute!="null"  && !isserverErr && renderButton()}
  </View>
  
  </SafeAreaView>

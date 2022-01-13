@@ -6,7 +6,7 @@ import  Home from "./Home/index";
   import Notification from "./Notification/index";
   import Notification_Detail from "./Notification_Detail/index";
 // import ChangeCar from "./ChangeCar/index"
-// import TripDetail from "./TripDetail/index"
+  import TripDetail from "./TripDetail/index"
 // import Trips from "./Trips/index"
 //screens
 export   const   screens =
@@ -18,7 +18,7 @@ export   const   screens =
   Notification,
   // ChangePin,
 // ChangeCar,
-// TripDetail,
+ TripDetail,
 // Trips
 }
 

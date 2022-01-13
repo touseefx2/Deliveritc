@@ -225,11 +225,9 @@ setloaderT(false);
    },
    { 
        showsBackgroundLocationIndicator:true,
-      //  enableHighAccuracy:false,
-      //  maximumAge: 3000,
-      //  timeout:30000,
-        enableHighAccuracy: true, timeout: 15000, maximumAge: 10000  ,
-        distanceFilter:15,
+       
+        enableHighAccuracy: true, timeout: 20000, maximumAge: 10000  ,
+        distanceFilter:10,
      
    }
    )
