@@ -21,9 +21,7 @@ import  Modal  from 'react-native-modal';
 import { ActivityIndicator, TextInput } from 'react-native-paper';
 import Geocoder from 'react-native-geocoding';
 
-
-
-
+ 
 export default inject("userStore","generalStore","carStore","tripStore")(observer(MapContainer));
  
 
